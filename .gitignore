@@ -26,6 +26,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Generated audio files
+story_audio.mp3
+
 # Distribution / packaging
 .Python
 build/

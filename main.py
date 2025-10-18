@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 from typing import Optional, List
 import os
@@ -30,6 +32,9 @@ app.add_middleware(
 # Initialize story generator
 story_generator = StoryGenerator()
 
+# Mount static files and frontend
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+
 # Request/Response Models
 class StoryResponse(BaseModel):
     theme: str
@@ -41,9 +46,15 @@ class HealthResponse(BaseModel):
     timestamp: datetime
     services: dict
 
-@app.get("/", response_model=dict)
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    """Root endpoint with API information"""
+    """Serve the frontend"""
+    with open("frontend/index.html", "r") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/api", response_model=dict)
+async def api_info():
+    """API information endpoint"""
     return {
         "message": "BridgeTales AI API",
         "version": "1.0.0",
@@ -53,6 +64,15 @@ async def root():
             "docs": "/docs"
         }
     }
+
+@app.get("/story_audio.mp3")
+async def get_audio():
+    """Serve the generated audio file"""
+    audio_path = "story_audio.mp3"
+    if os.path.exists(audio_path):
+        return FileResponse(audio_path, media_type="audio/mpeg")
+    else:
+        raise HTTPException(status_code=404, detail="Audio file not found")
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():

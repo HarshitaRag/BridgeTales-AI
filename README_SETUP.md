@@ -1,13 +1,19 @@
 # BridgeTales AI API Setup Guide
 
 ## Overview
-This FastAPI backend provides a `/generate_story` endpoint that connects to AWS Bedrock for AI story generation, with OpenAI as a backup option.
+BridgeTales is an AI-powered storytelling application with a beautiful storybook interface. It uses AWS Bedrock for story generation and ElevenLabs for voice narration, creating an immersive storytelling experience.
 
 ## Features
+- ✅ Beautiful storybook-themed web interface
+- ✅ Interactive theme input with quick action buttons
 - ✅ FastAPI backend with automatic API documentation
-- ✅ AWS Bedrock integration (primary)
+- ✅ AWS Bedrock integration (primary AI)
 - ✅ OpenAI integration (backup)
-- ✅ ElevenLabs voice generation
+- ✅ ElevenLabs voice generation and narration
+- ✅ Built-in audio player
+- ✅ Responsive design for all devices
+- ✅ Smooth animations and loading states
+- ✅ Share functionality
 - ✅ Health check endpoint
 - ✅ CORS support
 - ✅ Environment configuration
@@ -60,6 +66,25 @@ python main.py
 ```
 
 The server will start at `http://localhost:8000`
+
+## Using the Application
+
+### Web Interface
+1. **Open your browser** and go to `http://localhost:8000`
+2. **Enter a theme** in the input box (e.g., "friendship", "adventure", "magic")
+3. **Click "Generate Story"** or use one of the quick action buttons
+4. **Wait** for the AI to generate your story
+5. **Read and listen** to your personalized story with voice narration
+6. **Share** your story or create a new one!
+
+### Quick Action Buttons
+The interface includes preset theme buttons for quick story generation:
+- Kindness
+- Friendship
+- Adventure
+- Courage
+- Magic
+- Nature
 
 ## API Endpoints
 

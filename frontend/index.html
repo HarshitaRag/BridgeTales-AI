@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BridgeTales - AI Storyteller</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">BridgeTales</h1>
+            <p class="subtitle">AI-Powered Storyteller</p>
+        </header>
+
+        <div class="quick-actions">
+            <button class="action-btn" onclick="setTheme('kindness')">Kindness</button>
+            <button class="action-btn" onclick="setTheme('friendship')">Friendship</button>
+            <button class="action-btn" onclick="setTheme('adventure')">Adventure</button>
+            <button class="action-btn" onclick="setTheme('courage')">Courage</button>
+            <button class="action-btn" onclick="setTheme('magic')">Magic</button>
+            <button class="action-btn" onclick="setTheme('nature')">Nature</button>
+        </div>
+
+        <div class="story-input-section">
+            <div class="input-container">
+                <label for="themeInput" class="input-label">What would you like your story to be about?</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="themeInput" 
+                        class="theme-input" 
+                        placeholder="Enter a theme (e.g., friendship, adventure, magic...)"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button class="generate-btn" onclick="generateStory()">
+                        <span class="btn-text">Generate Story</span>
+                        <span class="btn-icon">✨</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading-state" style="display: none;">
+            <div class="book-loader">
+                <div class="book">
+                    <div class="page"></div>
+                    <div class="page"></div>
+                    <div class="page"></div>
+                </div>
+            </div>
+            <p class="loading-text">Crafting your story...</p>
+        </div>
+
+        <div id="storyContainer" class="story-container" style="display: none;">
+            <div class="story-book">
+                <div class="book-header">
+                    <h2 class="story-theme" id="storyTheme"></h2>
+                    <div class="theme-decoration"></div>
+                </div>
+                
+                <div class="story-content">
+                    <p class="story-text" id="storyText"></p>
+                </div>
+
+                <div class="audio-player" id="audioPlayer" style="display: none;">
+                    <div class="audio-controls">
+                        <button class="play-btn" id="playBtn" onclick="toggleAudio()">
+                            <span id="playIcon">▶</span>
+                        </button>
+                        <div class="audio-info">
+                            <span class="audio-label">Listen to your story</span>
+                            <div class="audio-progress">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <audio id="audioElement" onended="resetAudioButton()"></audio>
+                </div>
+
+                <div class="story-actions">
+                    <button class="action-button" onclick="shareStory()">
+                        <span>Share</span>
+                    </button>
+                    <button class="action-button" onclick="newStory()">
+                        <span>New Story</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+    </div>
+
+    <footer class="footer">
+        <p>Powered by AI • Creating stories that inspire</p>
+    </footer>
+
+    <script src="static/js/app.js"></script>
+</body>
+</html>
