@@ -15,8 +15,8 @@ def generate_image(story_text: str, theme: str, output_file: str = "story_image.
         # Configure Gemini
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
         
-        # Use Gemini's image generation model (Imagen)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Use Gemini Pro model for text generation
+        model = genai.GenerativeModel('gemini-pro')
         
         # Create a concise prompt for image generation
         # Extract key visual elements from the story
