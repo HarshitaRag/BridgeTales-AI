@@ -59,29 +59,22 @@ The server will start at `http://localhost:8000`
 
 ## API Endpoints
 
-### POST /generate_story
-Generate a story based on a prompt.
+### GET /story/generate
+Generate a story based on a theme.
 
-**Request Body:**
-```json
-{
-  "prompt": "A young wizard discovers a hidden library",
-  "max_length": 500,
-  "temperature": 0.7,
-  "genre": "fantasy",
-  "characters": ["wizard", "librarian"],
-  "setting": "ancient library"
-}
+**Query Parameters:**
+- `theme` (string, optional): The theme for the story (default: "kindness")
+
+**Example Request:**
+```
+GET /story/generate?theme=kindness
 ```
 
 **Response:**
 ```json
 {
-  "story": "Generated story content...",
-  "generated_at": "2024-01-01T12:00:00",
-  "model_used": "Bedrock-anthropic.claude-3-sonnet-20240229-v1:0",
-  "prompt_used": "A young wizard discovers a hidden library",
-  "word_count": 150
+  "theme": "kindness",
+  "story": "Once upon a time, in a small village nestled between rolling hills, there lived a young girl named Maya who had a heart full of kindness..."
 }
 ```
 

@@ -30,22 +30,9 @@ app.add_middleware(
 story_generator = StoryGenerator()
 
 # Request/Response Models
-class StoryRequest(BaseModel):
-    prompt: str
-    max_length: Optional[int] = 500
-    temperature: Optional[float] = 0.7
-    genre: Optional[str] = None
-    characters: Optional[List[str]] = None
-    setting: Optional[str] = None
-
 class StoryResponse(BaseModel):
-    model_config = {"protected_namespaces": ()}
-    
+    theme: str
     story: str
-    generated_at: datetime
-    model_used: str
-    prompt_used: str
-    word_count: int
 
 class HealthResponse(BaseModel):
     status: str
@@ -59,7 +46,7 @@ async def root():
         "message": "BridgeTales AI API",
         "version": "1.0.0",
         "endpoints": {
-            "generate_story": "/generate_story",
+            "generate_story": "/story/generate?theme=your_theme",
             "health": "/health",
             "docs": "/docs"
         }
@@ -79,33 +66,30 @@ async def health_check():
         services=services
     )
 
-@app.post("/generate_story", response_model=StoryResponse)
-async def generate_story(request: StoryRequest):
-    """Generate a story based on the provided prompt and parameters"""
+@app.get("/story/generate", response_model=StoryResponse)
+async def generate_story(theme: str = "kindness"):
+    """Generate a story based on the provided theme"""
     try:
-        # Validate request
-        if not request.prompt or len(request.prompt.strip()) < 10:
+        # Validate theme
+        if not theme or len(theme.strip()) < 2:
             raise HTTPException(
                 status_code=400, 
-                detail="Prompt must be at least 10 characters long"
+                detail="Theme must be at least 2 characters long"
             )
+        
+        # Create a prompt based on the theme
+        prompt = f"Write a short, engaging story about {theme}. Make it heartwarming and suitable for all ages."
         
         # Generate story
         result = await story_generator.generate_story(
-            prompt=request.prompt,
-            max_length=request.max_length,
-            temperature=request.temperature,
-            genre=request.genre,
-            characters=request.characters,
-            setting=request.setting
+            prompt=prompt,
+            max_length=300,
+            temperature=0.7
         )
         
         return StoryResponse(
-            story=result["story"],
-            generated_at=datetime.now(),
-            model_used=result["model_used"],
-            prompt_used=request.prompt,
-            word_count=len(result["story"].split())
+            theme=theme,
+            story=result["story"]
         )
         
     except Exception as e:
