@@ -7,6 +7,7 @@ This FastAPI backend provides a `/generate_story` endpoint that connects to AWS 
 - ✅ FastAPI backend with automatic API documentation
 - ✅ AWS Bedrock integration (primary)
 - ✅ OpenAI integration (backup)
+- ✅ ElevenLabs voice generation
 - ✅ Health check endpoint
 - ✅ CORS support
 - ✅ Environment configuration
@@ -28,12 +29,15 @@ cp env.example .env
 Edit `.env` file with your credentials:
 ```env
 # AWS Configuration
-AWS_REGION=us-east-1
+AWS_REGION=us-east-2
 AWS_ACCESS_KEY_ID=your_aws_access_key_here
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
 
 # OpenAI Configuration (backup)
 OPENAI_API_KEY=your_openai_api_key_here
+
+# ElevenLabs Configuration (for voice generation)
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 
 # Application Configuration
 ENVIRONMENT=development
@@ -74,7 +78,8 @@ GET /story/generate?theme=kindness
 ```json
 {
   "theme": "kindness",
-  "story": "Once upon a time, in a small village nestled between rolling hills, there lived a young girl named Maya who had a heart full of kindness..."
+  "story": "Once upon a time, in a small village nestled between rolling hills, there lived a young girl named Maya who had a heart full of kindness...",
+  "voice_file": "story_audio.mp3"
 }
 ```
 

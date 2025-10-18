@@ -15,6 +15,9 @@ class Config:
     # OpenAI Configuration (optional backup)
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     
+    # ElevenLabs Configuration
+    ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+    
     # Application Configuration
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -38,6 +41,10 @@ class Config:
         # OpenAI is optional (backup only)
         if not cls.OPENAI_API_KEY:
             warnings.append("OPENAI_API_KEY (optional backup)")
+        
+        # ElevenLabs is required for voice generation
+        if not cls.ELEVENLABS_API_KEY:
+            missing_configs.append("ELEVENLABS_API_KEY")
         
         if missing_configs:
             print(f"❌ Missing required configuration: {', '.join(missing_configs)}")

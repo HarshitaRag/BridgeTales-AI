@@ -6,6 +6,7 @@ import os
 import json
 import asyncio
 from datetime import datetime
+from voice_service import generate_voice
 
 # Import our story generation service and config
 from services.story_generator import StoryGenerator
@@ -33,6 +34,7 @@ story_generator = StoryGenerator()
 class StoryResponse(BaseModel):
     theme: str
     story: str
+    voice_file: str
 
 class HealthResponse(BaseModel):
     status: str
@@ -87,9 +89,15 @@ async def generate_story(theme: str = "kindness"):
             temperature=0.7
         )
         
+        story_text = result["story"]
+        
+        # Generate voice narration
+        voice_file = generate_voice(story_text)
+        
         return StoryResponse(
             theme=theme,
-            story=result["story"]
+            story=story_text,
+            voice_file=voice_file
         )
         
     except Exception as e:
