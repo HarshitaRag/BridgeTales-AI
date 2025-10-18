@@ -39,6 +39,8 @@ class StoryRequest(BaseModel):
     setting: Optional[str] = None
 
 class StoryResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
+    
     story: str
     generated_at: datetime
     model_used: str

@@ -13,26 +13,26 @@ logger = logging.getLogger(__name__)
 
 class StoryGenerator:
     def __init__(self):
-        self.aws_region = os.getenv("AWS_REGION", "us-east-1")
+        self.aws_region = os.getenv("AWS_REGION", "us-east-2")
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         
-        # Initialize AWS Bedrock client
+        # Initialize AWS Bedrock client (primary)
         try:
             self.bedrock_client = boto3.client(
                 'bedrock-runtime',
                 region_name=self.aws_region
             )
-            logger.info("AWS Bedrock client initialized successfully")
+            logger.info(f"✅ AWS Bedrock client initialized for region: {self.aws_region}")
         except Exception as e:
-            logger.warning(f"Failed to initialize AWS Bedrock client: {e}")
+            logger.error(f"❌ Failed to initialize AWS Bedrock client: {e}")
             self.bedrock_client = None
         
-        # Initialize OpenAI client
+        # Initialize OpenAI client (optional backup)
         if self.openai_api_key:
             openai.api_key = self.openai_api_key
-            logger.info("OpenAI client initialized successfully")
+            logger.info("✅ OpenAI client initialized successfully")
         else:
-            logger.warning("OpenAI API key not found")
+            logger.info("ℹ️  OpenAI API key not found - using Bedrock only")
     
     async def check_bedrock_connection(self) -> bool:
         """Check if AWS Bedrock connection is available"""
@@ -181,23 +181,38 @@ class StoryGenerator:
                            setting: Optional[str] = None) -> Dict[str, Any]:
         """Generate a story using the best available service"""
         
-        # Try Bedrock first, fall back to OpenAI
+        # Try Bedrock first (primary)
         if self.bedrock_client and await self.check_bedrock_connection():
             try:
-                logger.info("Generating story with AWS Bedrock")
+                logger.info("🚀 Generating story with AWS Bedrock")
                 return await self._generate_with_bedrock(
                     prompt, max_length, temperature, genre, characters, setting
                 )
             except Exception as e:
-                logger.warning(f"Bedrock failed, trying OpenAI: {e}")
+                logger.warning(f"⚠️  Bedrock failed: {e}")
+                
+                # Try OpenAI backup if available
+                if self.openai_api_key and await self.check_openai_connection():
+                    try:
+                        logger.info("🔄 Falling back to OpenAI")
+                        return await self._generate_with_openai(
+                            prompt, max_length, temperature, genre, characters, setting
+                        )
+                    except Exception as openai_error:
+                        logger.error(f"❌ OpenAI backup also failed: {openai_error}")
+                else:
+                    logger.error("❌ No OpenAI backup available")
+        else:
+            logger.error("❌ AWS Bedrock is not available")
+            
+            # Try OpenAI as last resort if available
+            if self.openai_api_key and await self.check_openai_connection():
+                try:
+                    logger.info("🔄 Using OpenAI as primary (Bedrock unavailable)")
+                    return await self._generate_with_openai(
+                        prompt, max_length, temperature, genre, characters, setting
+                    )
+                except Exception as e:
+                    logger.error(f"❌ OpenAI also failed: {e}")
         
-        if self.openai_api_key and await self.check_openai_connection():
-            try:
-                logger.info("Generating story with OpenAI")
-                return await self._generate_with_openai(
-                    prompt, max_length, temperature, genre, characters, setting
-                )
-            except Exception as e:
-                logger.error(f"OpenAI also failed: {e}")
-        
-        raise Exception("Both AWS Bedrock and OpenAI are unavailable. Please check your configuration.")
+        raise Exception("❌ All AI services are unavailable. Please check your AWS Bedrock configuration.")
