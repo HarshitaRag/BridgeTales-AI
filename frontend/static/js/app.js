@@ -135,6 +135,9 @@ function displayStory(data, append = false) {
         storyText.textContent = data.story;
     }
 
+    // Display illustration description if available
+    displayIllustration(data.image_description);
+
     // Set up audio if available
     if (data.voice_file) {
         audioElement.src = `${API_BASE_URL}/${data.voice_file}`;
@@ -156,6 +159,34 @@ function displayStory(data, append = false) {
     setTimeout(() => {
         storyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+}
+
+// Display illustration description
+function displayIllustration(imageDescription) {
+    let illustrationBox = document.getElementById('illustrationBox');
+    
+    if (!illustrationBox) {
+        illustrationBox = document.createElement('div');
+        illustrationBox.id = 'illustrationBox';
+        illustrationBox.className = 'illustration-box';
+        
+        // Insert after story text, before audio player
+        const storyContent = document.querySelector('.story-content');
+        storyContent.parentNode.insertBefore(illustrationBox, storyContent.nextSibling);
+    }
+    
+    if (imageDescription && imageDescription.trim()) {
+        illustrationBox.innerHTML = `
+            <div class="illustration-header">
+                <span class="illustration-icon">🎨</span>
+                <h3 class="illustration-title">Illustrated Scene</h3>
+            </div>
+            <p class="illustration-description">${imageDescription}</p>
+        `;
+        illustrationBox.style.display = 'block';
+    } else {
+        illustrationBox.style.display = 'none';
+    }
 }
 
 // Display choice buttons

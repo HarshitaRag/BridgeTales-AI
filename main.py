@@ -9,6 +9,7 @@ import json
 import asyncio
 from datetime import datetime
 from voice_service import generate_voice
+from image_service import generate_image
 
 # Import our story generation service and config
 from services.story_generator import StoryGenerator
@@ -40,6 +41,7 @@ class StoryResponse(BaseModel):
     theme: str
     story: str
     voice_file: str
+    image_description: str = ""
     choices: List[str] = []
     
 class ContinueRequest(BaseModel):
@@ -122,10 +124,15 @@ async def generate_story(theme: str = "kindness"):
         # Generate voice narration
         voice_file = generate_voice(story_text)
         
+        # Generate illustration
+        image_result = generate_image(story_text, theme)
+        image_description = image_result.get("description", "")
+        
         return StoryResponse(
             theme=theme,
             story=story_text,
             voice_file=voice_file,
+            image_description=image_description,
             choices=choices
         )
         
@@ -161,10 +168,15 @@ async def continue_story(request: ContinueRequest):
         # Generate voice narration
         voice_file = generate_voice(story_text)
         
+        # Generate illustration
+        image_result = generate_image(story_text, request.theme)
+        image_description = image_result.get("description", "")
+        
         return StoryResponse(
             theme=request.theme,
             story=story_text,
             voice_file=voice_file,
+            image_description=image_description,
             choices=choices
         )
         

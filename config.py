@@ -18,6 +18,9 @@ class Config:
     # ElevenLabs Configuration
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
     
+    # Gemini Configuration (for image generation)
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    
     # Application Configuration
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -45,6 +48,10 @@ class Config:
         # ElevenLabs is required for voice generation
         if not cls.ELEVENLABS_API_KEY:
             missing_configs.append("ELEVENLABS_API_KEY")
+        
+        # Gemini is required for image generation
+        if not cls.GEMINI_API_KEY:
+            missing_configs.append("GEMINI_API_KEY")
         
         if missing_configs:
             print(f"❌ Missing required configuration: {', '.join(missing_configs)}")
