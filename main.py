@@ -40,6 +40,12 @@ class StoryResponse(BaseModel):
     theme: str
     story: str
     voice_file: str
+    choices: List[str] = []
+    
+class ContinueRequest(BaseModel):
+    theme: str
+    choice: str
+    story_context: str
 
 class HealthResponse(BaseModel):
     status: str
@@ -100,16 +106,18 @@ async def generate_story(theme: str = "kindness"):
             )
         
         # Create a prompt based on the theme
-        prompt = f"Write a short, engaging story about {theme}. Make it heartwarming and suitable for all ages."
+        prompt = f"An interactive adventure about {theme}"
         
-        # Generate story
+        # Generate story with choices
         result = await story_generator.generate_story(
             prompt=prompt,
-            max_length=300,
-            temperature=0.7
+            max_length=1000,
+            temperature=0.7,
+            is_continuation=False
         )
         
         story_text = result["story"]
+        choices = result.get("choices", [])
         
         # Generate voice narration
         voice_file = generate_voice(story_text)
@@ -117,13 +125,53 @@ async def generate_story(theme: str = "kindness"):
         return StoryResponse(
             theme=theme,
             story=story_text,
-            voice_file=voice_file
+            voice_file=voice_file,
+            choices=choices
         )
         
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Story generation failed: {str(e)}"
+        )
+
+@app.post("/story/continue", response_model=StoryResponse)
+async def continue_story(request: ContinueRequest):
+    """Continue the story based on user's choice"""
+    try:
+        # Validate request
+        if not request.choice or len(request.choice.strip()) < 2:
+            raise HTTPException(
+                status_code=400, 
+                detail="Choice must be provided"
+            )
+        
+        # Continue story based on choice
+        result = await story_generator.generate_story(
+            prompt=request.story_context,
+            max_length=1000,
+            temperature=0.7,
+            is_continuation=True,
+            previous_choice=request.choice
+        )
+        
+        story_text = result["story"]
+        choices = result.get("choices", [])
+        
+        # Generate voice narration
+        voice_file = generate_voice(story_text)
+        
+        return StoryResponse(
+            theme=request.theme,
+            story=story_text,
+            voice_file=voice_file,
+            choices=choices
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Story continuation failed: {str(e)}"
         )
 
 if __name__ == "__main__":

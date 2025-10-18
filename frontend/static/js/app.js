@@ -4,6 +4,7 @@ const API_BASE_URL = 'http://localhost:8000';
 // State
 let currentAudio = null;
 let currentStoryData = null;
+let storyHistory = []; // Track story progression
 
 // Set theme from quick action button
 function setTheme(theme) {
@@ -28,6 +29,9 @@ async function generateStory() {
         return;
     }
 
+    // Reset story history for new story
+    storyHistory = [];
+
     // Hide previous content
     hideError();
     hideStory();
@@ -46,6 +50,12 @@ async function generateStory() {
 
         const data = await response.json();
         currentStoryData = data;
+        
+        // Add to history
+        storyHistory.push({
+            story: data.story,
+            choices: data.choices
+        });
 
         // Hide loading and show story
         hideLoading();
@@ -58,8 +68,56 @@ async function generateStory() {
     }
 }
 
+// Continue story with chosen option
+async function continueStory(choiceText) {
+    // Show loading state
+    showLoading();
+    hideStory();
+
+    try {
+        // Build story context from history
+        const storyContext = storyHistory.map(h => h.story).join('\n\n');
+        
+        // Call the continue API
+        const response = await fetch(`${API_BASE_URL}/story/continue`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                theme: currentStoryData.theme,
+                choice: choiceText,
+                story_context: storyContext
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to continue story');
+        }
+
+        const data = await response.json();
+        currentStoryData = data;
+        
+        // Add to history
+        storyHistory.push({
+            story: data.story,
+            choices: data.choices
+        });
+
+        // Hide loading and show story
+        hideLoading();
+        displayStory(data, true); // true = append mode
+
+    } catch (error) {
+        hideLoading();
+        showError(`Error: ${error.message}. Please try again.`);
+        console.error('Error continuing story:', error);
+    }
+}
+
 // Display the generated story
-function displayStory(data) {
+function displayStory(data, append = false) {
     const storyContainer = document.getElementById('storyContainer');
     const storyTheme = document.getElementById('storyTheme');
     const storyText = document.getElementById('storyText');
@@ -68,7 +126,14 @@ function displayStory(data) {
 
     // Set content
     storyTheme.textContent = data.theme;
-    storyText.textContent = data.story;
+    
+    if (append) {
+        // Append new segment to existing story
+        storyText.textContent += '\n\n' + data.story;
+    } else {
+        // New story
+        storyText.textContent = data.story;
+    }
 
     // Set up audio if available
     if (data.voice_file) {
@@ -81,6 +146,9 @@ function displayStory(data) {
         audioPlayer.style.display = 'none';
     }
 
+    // Display choices if available
+    displayChoices(data.choices);
+
     // Show story container
     storyContainer.style.display = 'block';
     
@@ -88,6 +156,43 @@ function displayStory(data) {
     setTimeout(() => {
         storyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+}
+
+// Display choice buttons
+function displayChoices(choices) {
+    const storyActions = document.querySelector('.story-actions');
+    
+    // Clear existing choice buttons (keep share and new story buttons)
+    const choiceButtons = storyActions.querySelectorAll('.choice-button');
+    choiceButtons.forEach(btn => btn.remove());
+    
+    if (choices && choices.length > 0) {
+        // Create a choices container
+        let choicesContainer = document.getElementById('choicesContainer');
+        if (!choicesContainer) {
+            choicesContainer = document.createElement('div');
+            choicesContainer.id = 'choicesContainer';
+            choicesContainer.className = 'choices-container';
+            // Insert before story actions
+            storyActions.parentNode.insertBefore(choicesContainer, storyActions);
+        }
+        
+        choicesContainer.innerHTML = '<h3 class="choices-title">What happens next?</h3>';
+        
+        choices.forEach((choice, index) => {
+            const button = document.createElement('button');
+            button.className = 'choice-button';
+            button.textContent = choice;
+            button.onclick = () => continueStory(choice);
+            choicesContainer.appendChild(button);
+        });
+    } else {
+        // Remove choices container if no choices
+        const choicesContainer = document.getElementById('choicesContainer');
+        if (choicesContainer) {
+            choicesContainer.remove();
+        }
+    }
 }
 
 // Toggle audio playback

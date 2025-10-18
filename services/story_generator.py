@@ -67,21 +67,48 @@ class StoryGenerator:
     
     def _build_bedrock_prompt(self, prompt: str, genre: Optional[str] = None, 
                             characters: Optional[List[str]] = None, 
-                            setting: Optional[str] = None) -> str:
+                            setting: Optional[str] = None,
+                            is_continuation: bool = False,
+                            previous_choice: Optional[str] = None) -> str:
         """Build a comprehensive prompt for Bedrock"""
-        system_prompt = """You are a creative storyteller. Write engaging, well-structured stories based on the given prompts. 
-        Focus on character development, vivid descriptions, and compelling narratives."""
-        
-        user_prompt = f"Write a story based on this prompt: {prompt}"
-        
-        if genre:
-            user_prompt += f"\nGenre: {genre}"
-        if characters:
-            user_prompt += f"\nCharacters: {', '.join(characters)}"
-        if setting:
-            user_prompt += f"\nSetting: {setting}"
-        
-        user_prompt += "\n\nMake the story engaging and well-written."
+        if is_continuation:
+            system_prompt = """You are a creative interactive storyteller. Continue the adventure story based on the reader's choice.
+            Write a complete story segment (3-4 paragraphs) that follows from their decision.
+            End with 2-3 meaningful choices for what happens next.
+            Format your response as:
+            
+            STORY:
+            [Your story segment here - make it complete and engaging]
+            
+            CHOICES:
+            1. [First choice]
+            2. [Second choice]
+            3. [Third choice - optional]"""
+            
+            user_prompt = f"Continue the story. The reader chose: {previous_choice}\n\nWrite the next segment and provide new choices."
+        else:
+            system_prompt = """You are a creative interactive storyteller creating choose-your-own-adventure stories.
+            Write an engaging opening for an interactive adventure (3-4 paragraphs).
+            Set the scene, introduce the main character, and create an exciting moment.
+            End with 2-3 meaningful choices for the reader.
+            Format your response as:
+            
+            STORY:
+            [Your story opening here - make it complete and engaging]
+            
+            CHOICES:
+            1. [First choice]
+            2. [Second choice]
+            3. [Third choice - optional]"""
+            
+            user_prompt = f"Start an interactive adventure story about: {prompt}"
+            
+            if genre:
+                user_prompt += f"\nGenre: {genre}"
+            if characters:
+                user_prompt += f"\nCharacters: {', '.join(characters)}"
+            if setting:
+                user_prompt += f"\nSetting: {setting}"
         
         return f"{system_prompt}\n\n{user_prompt}"
     
@@ -108,16 +135,57 @@ class StoryGenerator:
         messages.append({"role": "user", "content": user_content})
         return messages
     
+    def _parse_story_and_choices(self, text: str) -> Dict[str, Any]:
+        """Parse the story text and extract choices"""
+        # Split by STORY: and CHOICES:
+        story_part = ""
+        choices_part = ""
+        
+        if "STORY:" in text and "CHOICES:" in text:
+            parts = text.split("CHOICES:")
+            story_part = parts[0].replace("STORY:", "").strip()
+            choices_part = parts[1].strip()
+        else:
+            # Fallback: assume everything is story if format not followed
+            story_part = text.strip()
+        
+        # Parse choices (look for numbered lines)
+        choices = []
+        if choices_part:
+            lines = choices_part.split('\n')
+            for line in lines:
+                line = line.strip()
+                # Match patterns like "1.", "1)", "1 -", etc.
+                if line and (line[0].isdigit() or line.startswith('-')):
+                    # Clean up the choice text
+                    choice_text = line
+                    for prefix in ['1.', '2.', '3.', '1)', '2)', '3)', '1 -', '2 -', '3 -', '- ']:
+                        if choice_text.startswith(prefix):
+                            choice_text = choice_text[len(prefix):].strip()
+                            break
+                    if choice_text:
+                        choices.append(choice_text)
+        
+        return {
+            "story": story_part,
+            "choices": choices
+        }
+    
     async def _generate_with_bedrock(self, prompt: str, max_length: int, 
                                    temperature: float, genre: Optional[str] = None,
                                    characters: Optional[List[str]] = None,
-                                   setting: Optional[str] = None) -> Dict[str, Any]:
+                                   setting: Optional[str] = None,
+                                   is_continuation: bool = False,
+                                   previous_choice: Optional[str] = None) -> Dict[str, Any]:
         """Generate story using AWS Bedrock"""
         try:
             # Use Claude model (adjust model ID as needed)
             model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
             
-            full_prompt = self._build_bedrock_prompt(prompt, genre, characters, setting)
+            full_prompt = self._build_bedrock_prompt(
+                prompt, genre, characters, setting, 
+                is_continuation, previous_choice
+            )
             
             body = {
                 "anthropic_version": "bedrock-2023-05-31",
@@ -138,10 +206,14 @@ class StoryGenerator:
             )
             
             response_body = json.loads(response['body'].read())
-            story = response_body['content'][0]['text']
+            full_text = response_body['content'][0]['text']
+            
+            # Parse story and choices
+            parsed = self._parse_story_and_choices(full_text)
             
             return {
-                "story": story,
+                "story": parsed["story"],
+                "choices": parsed["choices"],
                 "model_used": f"Bedrock-{model_id}"
             }
             
@@ -175,10 +247,12 @@ class StoryGenerator:
             logger.error(f"OpenAI generation failed: {e}")
             raise Exception(f"OpenAI story generation failed: {str(e)}")
     
-    async def generate_story(self, prompt: str, max_length: int = 500, 
+    async def generate_story(self, prompt: str, max_length: int = 1000, 
                            temperature: float = 0.7, genre: Optional[str] = None,
                            characters: Optional[List[str]] = None,
-                           setting: Optional[str] = None) -> Dict[str, Any]:
+                           setting: Optional[str] = None,
+                           is_continuation: bool = False,
+                           previous_choice: Optional[str] = None) -> Dict[str, Any]:
         """Generate a story using the best available service"""
         
         # Try Bedrock first (primary)
@@ -186,7 +260,8 @@ class StoryGenerator:
             try:
                 logger.info("🚀 Generating story with AWS Bedrock")
                 return await self._generate_with_bedrock(
-                    prompt, max_length, temperature, genre, characters, setting
+                    prompt, max_length, temperature, genre, characters, setting,
+                    is_continuation, previous_choice
                 )
             except Exception as e:
                 logger.warning(f"⚠️  Bedrock failed: {e}")
