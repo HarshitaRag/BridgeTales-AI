@@ -349,6 +349,13 @@ function displayCurrentPage() {
 // Navigate to previous page
 function previousPage() {
     if (currentPageIndex > 0) {
+        // Stop current audio
+        const audioElement = document.getElementById('audioElement');
+        if (audioElement) {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+        }
+        
         currentPageIndex--;
         displayCurrentPage();
     }
@@ -357,6 +364,13 @@ function previousPage() {
 // Navigate to next page
 function nextPage() {
     if (currentPageIndex < storyPages.length - 1) {
+        // Stop current audio
+        const audioElement = document.getElementById('audioElement');
+        if (audioElement) {
+            audioElement.pause();
+            audioElement.currentTime = 0;
+        }
+        
         currentPageIndex++;
         displayCurrentPage();
     }
@@ -823,13 +837,17 @@ function toggleAudio() {
 // Rewind audio by 10 seconds
 function rewindAudio() {
     const audioElement = document.getElementById('audioElement');
-    audioElement.currentTime = Math.max(0, audioElement.currentTime - 10);
+    if (audioElement && audioElement.duration) {
+        audioElement.currentTime = Math.max(0, audioElement.currentTime - 10);
+    }
 }
 
 // Forward audio by 10 seconds
 function forwardAudio() {
     const audioElement = document.getElementById('audioElement');
-    audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + 10);
+    if (audioElement && audioElement.duration) {
+        audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + 10);
+    }
 }
 
 // Seek to specific position in audio
