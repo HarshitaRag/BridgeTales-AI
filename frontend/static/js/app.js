@@ -129,7 +129,6 @@ async function saveProfile(event) {
     document.getElementById('profileModal').style.display = 'none';
     updateAuthUI();
 }
->>>>>>> 73f56c4adaa25f51dfca87edfc24afe2f7f579b1
 
 // Set theme from quick action button
 function setTheme(theme) {
@@ -468,132 +467,6 @@ function displayIllustrations(images) {
     }
 }
 
-<<<<<<< HEAD
-// Add smart contextual location overlays based on story content
-function addSmartLocationOverlays() {
-    const overlaysContainer = document.getElementById('smartLocationOverlays');
-    if (!overlaysContainer) return;
-    
-    // Get story context to determine what to highlight
-    const storyText = document.getElementById('storyText').textContent.toLowerCase();
-    const overlays = [];
-    
-    // Analyze story content for specific elements
-    if (storyText.includes('cafe') || storyText.includes('coffee') || storyText.includes('restaurant') || storyText.includes('food')) {
-        overlays.push({
-            type: 'cafe',
-            text: 'See this café in real time?',
-            position: { top: '20%', left: '15%' },
-            icon: '☕'
-        });
-    }
-    
-    if (storyText.includes('park') || storyText.includes('garden') || storyText.includes('nature') || storyText.includes('tree')) {
-        overlays.push({
-            type: 'park',
-            text: 'Find this park near you?',
-            position: { top: '30%', right: '20%' },
-            icon: '🌳'
-        });
-    }
-    
-    if (storyText.includes('book') || storyText.includes('library') || storyText.includes('read') || storyText.includes('story')) {
-        overlays.push({
-            type: 'bookstore',
-            text: 'Visit this bookstore?',
-            position: { bottom: '25%', left: '10%' },
-            icon: '📚'
-        });
-    }
-    
-    if (storyText.includes('shop') || storyText.includes('store') || storyText.includes('buy') || storyText.includes('market')) {
-        overlays.push({
-            type: 'shop',
-            text: 'Shop at this place?',
-            position: { bottom: '20%', right: '15%' },
-            icon: '🛍️'
-        });
-    }
-    
-    if (storyText.includes('playground') || storyText.includes('play') || storyText.includes('fun') || storyText.includes('game')) {
-        overlays.push({
-            type: 'playground',
-            text: 'Play at this place?',
-            position: { top: '60%', left: '50%' },
-            icon: '🎪'
-        });
-    }
-    
-    // If no specific elements found, add a general overlay
-    if (overlays.length === 0) {
-        overlays.push({
-            type: 'general',
-            name: 'Nearby',
-            position: { top: '25%', left: '5%' },
-            icon: '📍'
-        });
-    }
-    
-    // Limit to 3 overlays maximum
-    const limitedOverlays = overlays.slice(0, 3);
-    
-    // Define side positions for 3 overlays
-    const sidePositions = [
-        { top: '25%', left: '5%' },    // Left side
-        { top: '50%', right: '5%' },  // Right side  
-        { top: '75%', left: '5%' }    // Left side bottom
-    ];
-    
-    // Update positions to be on sides
-    limitedOverlays.forEach((overlay, index) => {
-        overlay.position = sidePositions[index];
-        overlay.name = overlay.name || overlay.text?.split(' ')[0] || 'Nearby';
-    });
-    
-    // Create and display overlays with staggered animation
-    limitedOverlays.forEach((overlay, index) => {
-        setTimeout(() => {
-            const overlayElement = createSmartOverlay(overlay, index);
-            overlaysContainer.appendChild(overlayElement);
-        }, index * 400); // 400ms delay between each overlay
-    });
-    
-    overlaysContainer.style.display = 'block';
-}
-
-// Create a smart contextual overlay
-function createSmartOverlay(overlay, index) {
-    const overlayDiv = document.createElement('div');
-    overlayDiv.className = 'smart-location-overlay';
-    
-    // Handle both left and right positioning
-    let positionStyle = '';
-    if (overlay.position.left) {
-        positionStyle = `top: ${overlay.position.top}; left: ${overlay.position.left};`;
-    } else if (overlay.position.right) {
-        positionStyle = `top: ${overlay.position.top}; right: ${overlay.position.right};`;
-    }
-    
-    overlayDiv.style.cssText = `
-        position: absolute;
-        ${positionStyle}
-        transform: translateY(-50%);
-        z-index: 10;
-        animation: fadeInScale 1.5s ease-out ${index * 0.4}s both;
-    `;
-    
-    overlayDiv.innerHTML = `
-        <button class="smart-overlay-btn" onclick="findNearbyBusinesses('${overlay.type}')">
-            <span class="smart-icon">${overlay.icon}</span>
-            <span class="smart-text">${overlay.name}</span>
-            <div class="smart-pulse-ring"></div>
-        </button>
-    `;
-    
-    return overlayDiv;
-}
-
-=======
 // Open Visa payment modal
 function openVisaModal() {
     console.log('openVisaModal called');
@@ -606,14 +479,21 @@ function openVisaModal() {
     // Generate 3-5 related shops
     const shops = generateShops(mainLocation);
     
-    // Populate shops list
+    // Populate shops list with editable amounts
     const shopsList = document.getElementById('shopsList');
     shopsList.innerHTML = shops.map((shop, index) => `
         <label class="shop-item">
-            <input type="checkbox" class="shop-checkbox" data-amount="${shop.amount}" onchange="updateTotal()">
+            <input type="checkbox" class="shop-checkbox" data-index="${index}" onchange="updateTotal()">
             <div class="shop-info">
                 <div class="shop-name">${shop.name}</div>
-                <div class="shop-amount">$${shop.amount.toFixed(2)}</div>
+                <input type="number" 
+                       class="shop-amount-input" 
+                       data-index="${index}"
+                       value="${shop.amount.toFixed(2)}" 
+                       min="0.01" 
+                       step="0.01"
+                       onchange="updateTotal()"
+                       onclick="event.stopPropagation()">
             </div>
         </label>
     `).join('');
@@ -642,13 +522,18 @@ function generateShops(mainLocation) {
     return shops.slice(0, count);
 }
 
-// Update total amount based on selected shops
+// Update total amount based on selected shops and custom amounts
 function updateTotal() {
     const checkboxes = document.querySelectorAll('.shop-checkbox:checked');
     let total = 0;
     
     checkboxes.forEach(checkbox => {
-        total += parseFloat(checkbox.dataset.amount);
+        const index = checkbox.dataset.index;
+        const amountInput = document.querySelector(`.shop-amount-input[data-index="${index}"]`);
+        if (amountInput) {
+            const amount = parseFloat(amountInput.value) || 0;
+            total += amount;
+        }
     });
     
     document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
@@ -664,12 +549,14 @@ function closeVisaModal() {
 function processPayment(event) {
     event.preventDefault();
     
-    // Get selected shops
+    // Get selected shops with custom amounts
     const selectedShops = [];
     document.querySelectorAll('.shop-checkbox:checked').forEach(checkbox => {
+        const index = checkbox.dataset.index;
         const shopItem = checkbox.closest('.shop-item');
         const shopName = shopItem.querySelector('.shop-name').textContent;
-        const amount = parseFloat(checkbox.dataset.amount);
+        const amountInput = shopItem.querySelector('.shop-amount-input');
+        const amount = parseFloat(amountInput.value) || 0;
         selectedShops.push({ name: shopName, amount });
     });
     
@@ -787,7 +674,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
->>>>>>> 73f56c4adaa25f51dfca87edfc24afe2f7f579b1
 // Display choice buttons
 function displayChoices(choices) {
     const storyActions = document.querySelector('.story-actions');
@@ -1244,7 +1130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
->>>>>>> 73f56c4adaa25f51dfca87edfc24afe2f7f579b1
     console.log('BridgeTales AI Storyteller loaded successfully!');
     console.log('Visa modal event listeners attached');
 });

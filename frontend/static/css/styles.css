@@ -853,6 +853,28 @@ body {
     font-size: 1.1rem;
 }
 
+.shop-amount-input {
+    width: 120px;
+    padding: 0.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1434CB;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.shop-amount-input:focus {
+    outline: none;
+    border-color: #1434CB;
+    box-shadow: 0 0 0 3px rgba(20, 52, 203, 0.1);
+}
+
+.shop-amount-input:hover {
+    border-color: #1434CB;
+}
+
 .total-amount {
     font-size: 2rem;
     font-weight: 700;
