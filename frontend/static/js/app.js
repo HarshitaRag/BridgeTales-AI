@@ -481,19 +481,12 @@ async function openVisaModal() {
         // Get user's location
         const position = await getUserLocation();
         
-        // Fetch real nearby businesses
-        const response = await fetch(`${API_BASE_URL}/location/nearby`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                latitude: position.latitude,
-                longitude: position.longitude,
-                radius: 5000,  // 5km radius
-                max_results: 5
-            })
-        });
+        // Search for specific business types (cafes, restaurants, stores, parks)
+        const businessTypes = ['cafe', 'restaurant', 'store', 'park', 'shop'];
+        const randomType = businessTypes[Math.floor(Math.random() * businessTypes.length)];
+        
+        // Fetch real nearby businesses using text search
+        const response = await fetch(`${API_BASE_URL}/location/search?query=${randomType}&latitude=${position.latitude}&longitude=${position.longitude}&max_results=5`);
         
         if (!response.ok) {
             throw new Error('Failed to fetch nearby businesses');
