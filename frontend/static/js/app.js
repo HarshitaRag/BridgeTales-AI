@@ -4,7 +4,8 @@ const API_BASE_URL = 'http://localhost:8000';
 // State
 let currentAudio = null;
 let currentStoryData = null;
-let storyHistory = []; // Track story progression
+let storyPages = []; // Store all story pages with images
+let currentPageIndex = 0; // Current page being viewed
 
 // Set theme from quick action button
 function setTheme(theme) {
@@ -29,8 +30,9 @@ async function generateStory() {
         return;
     }
 
-    // Reset story history for new story
-    storyHistory = [];
+    // Reset story pages for new story
+    storyPages = [];
+    currentPageIndex = 0;
 
     // Hide previous content
     hideError();
@@ -51,15 +53,19 @@ async function generateStory() {
         const data = await response.json();
         currentStoryData = data;
         
-        // Add to history
-        storyHistory.push({
+        // Add to pages
+        storyPages.push({
             story: data.story,
-            choices: data.choices
+            images: data.images || [],
+            choices: data.choices || [],
+            theme: data.theme
         });
+        
+        currentPageIndex = storyPages.length - 1;
 
         // Hide loading and show story
         hideLoading();
-        displayStory(data);
+        displayCurrentPage();
 
     } catch (error) {
         hideLoading();
@@ -75,8 +81,8 @@ async function continueStory(choiceText) {
     hideStory();
 
     try {
-        // Build story context from history
-        const storyContext = storyHistory.map(h => h.story).join('\n\n');
+        // Build story context from pages
+        const storyContext = storyPages.map(p => p.story).join('\n\n');
         
         // Call the continue API
         const response = await fetch(`${API_BASE_URL}/story/continue`, {
@@ -99,15 +105,19 @@ async function continueStory(choiceText) {
         const data = await response.json();
         currentStoryData = data;
         
-        // Add to history
-        storyHistory.push({
+        // Add new page
+        storyPages.push({
             story: data.story,
-            choices: data.choices
+            images: data.images || [],
+            choices: data.choices || [],
+            theme: data.theme
         });
+        
+        currentPageIndex = storyPages.length - 1;
 
         // Hide loading and show story
         hideLoading();
-        displayStory(data, true); // true = append mode
+        displayCurrentPage();
 
     } catch (error) {
         hideLoading();
@@ -116,7 +126,91 @@ async function continueStory(choiceText) {
     }
 }
 
-// Display the generated story
+// Display current page
+function displayCurrentPage() {
+    if (storyPages.length === 0) return;
+    
+    const page = storyPages[currentPageIndex];
+    const storyContainer = document.getElementById('storyContainer');
+    const storyTheme = document.getElementById('storyTheme');
+    const storyText = document.getElementById('storyText');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const audioElement = document.getElementById('audioElement');
+    const pageNavigation = document.getElementById('pageNavigation');
+
+    // Set content
+    storyTheme.textContent = page.theme;
+    storyText.textContent = page.story;
+
+    // Display illustrations
+    displayIllustrations(page.images);
+
+    // Set up audio if available
+    if (currentStoryData && currentStoryData.voice_file) {
+        audioElement.src = `${API_BASE_URL}/${currentStoryData.voice_file}`;
+        audioPlayer.style.display = 'block';
+        audioElement.addEventListener('loadedmetadata', updateDuration);
+    } else {
+        audioPlayer.style.display = 'none';
+    }
+
+    // Update page navigation
+    updatePageNavigation();
+
+    // Display choices only on the last page
+    if (currentPageIndex === storyPages.length - 1) {
+        displayChoices(page.choices);
+    } else {
+        // Hide choices on previous pages
+        const choicesContainer = document.getElementById('choicesContainer');
+        if (choicesContainer) choicesContainer.style.display = 'none';
+    }
+
+    // Show story container
+    storyContainer.style.display = 'block';
+    
+    // Scroll to story
+    setTimeout(() => {
+        storyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+}
+
+// Navigate to previous page
+function previousPage() {
+    if (currentPageIndex > 0) {
+        currentPageIndex--;
+        displayCurrentPage();
+    }
+}
+
+// Navigate to next page
+function nextPage() {
+    if (currentPageIndex < storyPages.length - 1) {
+        currentPageIndex++;
+        displayCurrentPage();
+    }
+}
+
+// Update page navigation buttons
+function updatePageNavigation() {
+    const pageNavigation = document.getElementById('pageNavigation');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const pageIndicator = document.getElementById('pageIndicator');
+    
+    if (storyPages.length > 1) {
+        pageNavigation.style.display = 'flex';
+        pageIndicator.textContent = `Page ${currentPageIndex + 1} of ${storyPages.length}`;
+        
+        // Enable/disable buttons
+        prevBtn.disabled = currentPageIndex === 0;
+        nextBtn.disabled = currentPageIndex === storyPages.length - 1;
+    } else {
+        pageNavigation.style.display = 'none';
+    }
+}
+
+// Old function (keeping for compatibility)
 function displayStory(data, append = false) {
     const storyContainer = document.getElementById('storyContainer');
     const storyTheme = document.getElementById('storyTheme');
@@ -167,21 +261,19 @@ function displayStory(data, append = false) {
     }, 100);
 }
 
-// Display illustrations (actual images from Stable Diffusion)
+// Display illustrations (actual images from Bedrock Titan)
 function displayIllustrations(images) {
     const illustrationBox = document.getElementById('illustrationBox');
+    const illustrationContent = document.getElementById('illustrationContent');
     
     console.log('Images:', images);
     
     if (images && images.length > 0) {
-        // Display the first image (could expand to show multiple)
+        // Display the first image
         const imageUrl = images[0];
         
-        illustrationBox.innerHTML = `
-            <div class="illustration-header">
-                <span class="illustration-label">Story Illustration</span>
-            </div>
-            <img src="${imageUrl}" alt="Story illustration" class="story-illustration-img" />
+        illustrationContent.innerHTML = `
+            <img src="${imageUrl}" alt="Story illustration" class="story-illustration-img" onerror="this.style.display='none'" />
         `;
         illustrationBox.style.display = 'block';
     } else {

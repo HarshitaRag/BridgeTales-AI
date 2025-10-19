@@ -8,28 +8,40 @@ import base64
 load_dotenv()
 
 def generate_images(prompt: str):
+    """Generate images using Amazon Titan Image Generator"""
     try:
-        print("🎨 Generating image with Bedrock Stable Diffusion...")
+        print("🎨 Generating image with Amazon Titan Image Generator...")
         client = boto3.client(
             "bedrock-runtime",
             region_name=os.getenv("AWS_REGION", "us-east-1")
         )
 
+        # Titan Image Generator request format
         body = json.dumps({
-            "text_prompts": [{"text": prompt}],
-            "cfg_scale": 8,
-            "steps": 40
+            "taskType": "TEXT_IMAGE",
+            "textToImageParams": {
+                "text": prompt
+            },
+            "imageGenerationConfig": {
+                "numberOfImages": 1,
+                "quality": "standard",
+                "cfgScale": 8.0,
+                "height": 512,
+                "width": 512,
+                "seed": 0
+            }
         })
 
-        # Try different Stable Diffusion models based on availability
-        # Common model IDs: stability.stable-diffusion-xl-v1, amazon.titan-image-generator-v1
+        # Use Amazon Titan Image Generator
         response = client.invoke_model(
-            modelId="stability.stable-diffusion-xl-v1:0",
+            modelId="amazon.titan-image-generator-v1",
             body=body
         )
 
         result = json.loads(response["body"].read())
-        image_base64 = result["artifacts"][0]["base64"]
+        
+        # Titan returns images in base64
+        image_base64 = result["images"][0]
 
         output_path = "illustration.png"
         with open(output_path, "wb") as f:
@@ -42,4 +54,4 @@ def generate_images(prompt: str):
         import traceback
         print("❌ Bedrock Image Generation failed:")
         traceback.print_exc()
-        return ["https://placehold.co/600x400?text=Illustration+Unavailable"]
+        return []
