@@ -335,30 +335,6 @@ async def get_nearby_businesses(request: LocationRequest):
             detail=f"Failed to find nearby businesses: {str(e)}"
         )
 
-@app.get("/location/search", response_model=List[BusinessResponse])
-async def search_businesses(
-    query: str, 
-    latitude: float, 
-    longitude: float, 
-    max_results: int = 5
-):
-    """Search for businesses by type near a location"""
-    try:
-        businesses = await location_service.search_businesses_by_text(
-            search_text=f"{query} near me",
-            latitude=latitude,
-            longitude=longitude,
-            max_results=max_results
-        )
-        
-        return [BusinessResponse(**business) for business in businesses]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to search businesses: {str(e)}"
-        )
-
 @app.post("/location/story-related", response_model=List[BusinessResponse])
 async def get_story_related_businesses(request: StoryLocationRequest):
     """Get businesses related to story context"""

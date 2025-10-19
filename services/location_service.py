@@ -135,36 +135,60 @@ class LocationService:
         longitude: float,
         max_results: int = 10
     ) -> List[Dict]:
-        """Search using AWS Location Service text search"""
+        """Search using AWS Location Service text search - BUSINESSES ONLY"""
         try:
-            # Prepare search parameters
+            # Prepare search parameters with business category filters
             search_params = {
                 'IndexName': self.place_index_name,
                 'Text': search_text,
                 'BiasPosition': [longitude, latitude],  # Note: AWS uses [lng, lat] format
-                'MaxResults': max_results
+                'MaxResults': max_results * 3,  # Get more results to filter
+                'FilterCategories': [
+                    'Restaurant',
+                    'Cafe',
+                    'Store',
+                    'Shop',
+                    'Park',
+                    'Recreation',
+                    'Entertainment',
+                    'Food',
+                    'Shopping'
+                ]
             }
             
             # Perform the search
             response = self.client.search_place_index_for_text(**search_params)
             
-            # Extract and format business information
+            # Extract and format business information - FILTER OUT RESIDENTIAL
             businesses = []
             for result in response.get('Results', []):
                 place = result.get('Place', {})
-                business_info = {
-                    'name': place.get('Label', 'Unknown'),
-                    'address': place.get('Address', ''),
-                    'phone': place.get('PhoneNumber', ''),
-                    'website': place.get('Website', ''),
-                    'categories': place.get('Categories', []),
-                    'latitude': place.get('Geometry', {}).get('Point', [None, None])[1],
-                    'longitude': place.get('Geometry', {}).get('Point', [None, None])[0],
-                    'distance': result.get('Distance', 0)
-                }
-                businesses.append(business_info)
+                categories = place.get('Categories', [])
+                label = place.get('Label', 'Unknown')
+                
+                # Skip residential addresses and street addresses
+                if any(skip in label.lower() for skip in ['street', 'avenue', 'road', 'lane', 'drive', 'way']):
+                    if not categories:  # Only skip if no business categories
+                        continue
+                
+                # Only include if it has business categories
+                if categories and len(categories) > 0:
+                    business_info = {
+                        'name': label.split(',')[0],  # Just the business name, not full address
+                        'address': ', '.join(label.split(',')[1:]).strip() if ',' in label else place.get('Address', ''),
+                        'phone': place.get('PhoneNumber', ''),
+                        'website': place.get('Website', ''),
+                        'categories': categories,
+                        'latitude': place.get('Geometry', {}).get('Point', [None, None])[1],
+                        'longitude': place.get('Geometry', {}).get('Point', [None, None])[0],
+                        'distance': result.get('Distance', 0)
+                    }
+                    businesses.append(business_info)
+                    
+                    if len(businesses) >= max_results:
+                        break
             
-            return businesses
+            return businesses[:max_results]
             
         except Exception as e:
             print(f"Error searching businesses by text with AWS: {e}")
