@@ -467,44 +467,130 @@ function displayIllustrations(images) {
     }
 }
 
-// Open Visa payment modal
-function openVisaModal() {
+// Open Visa payment modal with real nearby businesses
+async function openVisaModal() {
     console.log('openVisaModal called');
     const modal = document.getElementById('visaPaymentModal');
-    
-    // Get location from current page
-    const currentPage = storyPages[currentPageIndex];
-    const mainLocation = currentPage?.location || currentLocation || "Story Location";
-    
-    // Generate 3-5 related shops
-    const shops = generateShops(mainLocation);
-    
-    // Populate shops list with editable amounts
     const shopsList = document.getElementById('shopsList');
-    shopsList.innerHTML = shops.map((shop, index) => `
-        <label class="shop-item">
-            <input type="checkbox" class="shop-checkbox" data-index="${index}" onchange="updateTotal()">
-            <div class="shop-info">
-                <div class="shop-name">${shop.name}</div>
-                <input type="number" 
-                       class="shop-amount-input" 
-                       data-index="${index}"
-                       value="${shop.amount.toFixed(2)}" 
-                       min="0.01" 
-                       step="0.01"
-                       onchange="updateTotal()"
-                       onclick="event.stopPropagation()">
-            </div>
-        </label>
-    `).join('');
     
-    // Reset total
-    updateTotal();
+    // Show loading state
+    shopsList.innerHTML = '<div style="text-align: center; padding: 2rem;">🔍 Finding nearby businesses...</div>';
+    modal.style.display = 'flex';
     
-    if (modal) {
-        modal.style.display = 'flex';
-        console.log('Modal opened with shops:', shops);
+    try {
+        // Get user's location
+        const position = await getUserLocation();
+        
+        // Fetch real nearby businesses
+        const response = await fetch(`${API_BASE_URL}/location/nearby`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                latitude: position.latitude,
+                longitude: position.longitude,
+                radius: 5000,  // 5km radius
+                max_results: 5
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch nearby businesses');
+        }
+        
+        const businesses = await response.json();
+        
+        // If we got real businesses, use them; otherwise fall back to demo
+        const shops = businesses.length > 0 
+            ? businesses.map(b => ({
+                name: b.name,
+                address: b.address,
+                amount: parseFloat((Math.random() * 20 + 5).toFixed(2)) // Random $5-$25
+            }))
+            : generateShops(currentLocation); // Fallback to demo shops
+        
+        // Populate shops list with editable amounts
+        shopsList.innerHTML = shops.map((shop, index) => `
+            <label class="shop-item">
+                <input type="checkbox" class="shop-checkbox" data-index="${index}" onchange="updateTotal()">
+                <div class="shop-info">
+                    <div class="shop-name">${shop.name}</div>
+                    ${shop.address ? `<div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.2rem;">${shop.address}</div>` : ''}
+                    <input type="number" 
+                           class="shop-amount-input" 
+                           data-index="${index}"
+                           value="${shop.amount.toFixed(2)}" 
+                           min="0.01" 
+                           step="0.01"
+                           onchange="updateTotal()"
+                           onclick="event.stopPropagation()">
+                </div>
+            </label>
+        `).join('');
+        
+        // Reset total
+        updateTotal();
+        
+        console.log('Modal opened with real nearby businesses:', shops);
+        
+    } catch (error) {
+        console.error('Error loading businesses:', error);
+        
+        // Fall back to demo shops if location fails
+        const currentPage = storyPages[currentPageIndex];
+        const mainLocation = currentPage?.location || currentLocation || "Story Location";
+        const shops = generateShops(mainLocation);
+        
+        shopsList.innerHTML = shops.map((shop, index) => `
+            <label class="shop-item">
+                <input type="checkbox" class="shop-checkbox" data-index="${index}" onchange="updateTotal()">
+                <div class="shop-info">
+                    <div class="shop-name">${shop.name}</div>
+                    <input type="number" 
+                           class="shop-amount-input" 
+                           data-index="${index}"
+                           value="${shop.amount.toFixed(2)}" 
+                           min="0.01" 
+                           step="0.01"
+                           onchange="updateTotal()"
+                           onclick="event.stopPropagation()">
+                </div>
+            </label>
+        `).join('');
+        
+        updateTotal();
+        
+        console.log('Modal opened with demo shops (location unavailable):', shops);
     }
+}
+
+// Get user's location
+function getUserLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocation is not supported by your browser'));
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+            },
+            (error) => {
+                console.warn('Location access denied:', error);
+                reject(error);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+    });
 }
 
 // Generate related shops based on main location
