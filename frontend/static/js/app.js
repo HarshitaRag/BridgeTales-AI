@@ -279,8 +279,14 @@ async function saveFinishedBook() {
     
     // Save to localStorage
     const finishedBooks = JSON.parse(localStorage.getItem('finishedBooks') || '[]');
+    const isFirstStory = finishedBooks.length === 0;
     finishedBooks.push(book);
     localStorage.setItem('finishedBooks', JSON.stringify(finishedBooks));
+    
+    // Show achievement for first story!
+    if (isFirstStory) {
+        setTimeout(() => showAchievement(), 1000);
+    }
     
     // Save to backend/Pinecone
     try {
@@ -292,6 +298,21 @@ async function saveFinishedBook() {
     } catch (error) {
         console.error('Error saving book to backend:', error);
     }
+}
+
+// Show achievement popup
+function showAchievement() {
+    const popup = document.getElementById('achievementPopup');
+    popup.classList.add('show');
+    
+    // Show confetti
+    showConfetti();
+    
+    // Hide after 4 seconds
+    setTimeout(() => {
+        popup.classList.remove('show');
+        stopConfetti();
+    }, 4000);
 }
 
 // Display current page
