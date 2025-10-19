@@ -341,6 +341,15 @@ body {
     margin: 0;
 }
 
+.story-illustration-img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-top: 1rem;
+    border: 3px solid white;
+}
+
 /* Enhanced Audio Player */
 .audio-player-enhanced {
     background: linear-gradient(135deg, #1f2937, #374151);

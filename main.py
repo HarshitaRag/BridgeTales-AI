@@ -8,9 +8,8 @@ import os
 import json
 import asyncio
 from datetime import datetime
-#from voice_service import generate_voice
-from image_service import generate_image
 from voice_service import generate_voice_with_polly
+from image_service import generate_images
 # Import our story generation service and config
 from services.story_generator import StoryGenerator
 from config import Config
@@ -41,7 +40,7 @@ class StoryResponse(BaseModel):
     theme: str
     story: str
     voice_file: Optional[str] = ""
-    image_description: str = ""
+    images: List[str] = []
     choices: List[str] = []
     
 class ContinueRequest(BaseModel):
@@ -81,6 +80,15 @@ async def get_audio():
         return FileResponse(audio_path, media_type="audio/mpeg")
     else:
         raise HTTPException(status_code=404, detail="Audio file not found")
+
+@app.get("/illustration.png")
+async def get_illustration():
+    """Serve the generated illustration image"""
+    image_path = "illustration.png"
+    if os.path.exists(image_path):
+        return FileResponse(image_path, media_type="image/png")
+    else:
+        raise HTTPException(status_code=404, detail="Image file not found")
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -130,11 +138,11 @@ async def generate_story(theme: str = "kindness"):
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
         
-        # Generate illustration (optional)
-        image_description = ""
+        # Generate illustration with Bedrock Stable Diffusion XL
+        images = []
         try:
-            image_result = generate_image(story_text, theme)
-            image_description = image_result.get("description", "")
+            image_prompt = f"Children's storybook illustration based on this story: {story_text[:200]}"
+            images = generate_images(image_prompt)
         except Exception as e:
             print(f"⚠️ Image generation failed: {e}")
         
@@ -142,7 +150,7 @@ async def generate_story(theme: str = "kindness"):
             theme=theme,
             story=story_text,
             voice_file=voice_file,
-            image_description=image_description,
+            images=images,
             choices=choices
         )
         
@@ -184,11 +192,11 @@ async def continue_story(request: ContinueRequest):
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
         
-        # Generate illustration (optional)
-        image_description = ""
+        # Generate illustration with Bedrock Stable Diffusion XL
+        images = []
         try:
-            image_result = generate_image(story_text, request.theme)
-            image_description = image_result.get("description", "")
+            image_prompt = f"Children's storybook illustration based on this story: {story_text[:200]}"
+            images = generate_images(image_prompt)
         except Exception as e:
             print(f"⚠️ Image generation failed: {e}")
         
@@ -196,7 +204,7 @@ async def continue_story(request: ContinueRequest):
             theme=request.theme,
             story=story_text,
             voice_file=voice_file,
-            image_description=image_description,
+            images=images,
             choices=choices
         )
         

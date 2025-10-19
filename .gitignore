@@ -29,6 +29,10 @@ Thumbs.db
 # Generated audio files
 story_audio.mp3
 
+# Generated images
+illustration.png
+*.png
+
 # Distribution / packaging
 .Python
 build/

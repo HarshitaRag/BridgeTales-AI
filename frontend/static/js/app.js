@@ -141,8 +141,8 @@ function displayStory(data, append = false) {
     
     console.log('Story element updated with', storyText.textContent.length, 'characters');
 
-    // Display illustration in left page
-    displayIllustration(data.image_description);
+    // Display illustrations
+    displayIllustrations(data.images);
 
     // Set up audio if available
     if (data.voice_file) {
@@ -167,17 +167,22 @@ function displayStory(data, append = false) {
     }, 100);
 }
 
-// Display illustration
-function displayIllustration(imageDescription) {
+// Display illustrations (actual images from Stable Diffusion)
+function displayIllustrations(images) {
     const illustrationBox = document.getElementById('illustrationBox');
-    const illustrationDescription = document.getElementById('illustrationDescription');
     
-    console.log('Image description:', imageDescription);
+    console.log('Images:', images);
     
-    if (imageDescription && imageDescription.trim() && 
-        imageDescription !== "Image generation unavailable" &&
-        imageDescription !== "Gemini API key not configured") {
-        illustrationDescription.textContent = imageDescription;
+    if (images && images.length > 0) {
+        // Display the first image (could expand to show multiple)
+        const imageUrl = images[0];
+        
+        illustrationBox.innerHTML = `
+            <div class="illustration-header">
+                <span class="illustration-label">Story Illustration</span>
+            </div>
+            <img src="${imageUrl}" alt="Story illustration" class="story-illustration-img" />
+        `;
         illustrationBox.style.display = 'block';
     } else {
         illustrationBox.style.display = 'none';
