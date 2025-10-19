@@ -32,6 +32,9 @@ app.add_middleware(
 # Initialize story generator
 story_generator = StoryGenerator()
 
+# Track page counter for unique images
+page_counter = 0
+
 # Mount static files and frontend
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
@@ -81,10 +84,10 @@ async def get_audio():
     else:
         raise HTTPException(status_code=404, detail="Audio file not found")
 
-@app.get("/illustration.png")
-async def get_illustration():
-    """Serve the generated illustration image"""
-    image_path = "illustration.png"
+@app.get("/illustration_page_{page_num}.png")
+async def get_illustration(page_num: int):
+    """Serve the generated illustration image for a specific page"""
+    image_path = f"illustration_page_{page_num}.png"
     if os.path.exists(image_path):
         return FileResponse(image_path, media_type="image/png")
     else:
@@ -107,6 +110,9 @@ async def health_check():
 @app.get("/story/generate", response_model=StoryResponse)
 async def generate_story(theme: str = "kindness"):
     """Generate a story based on the provided theme"""
+    global page_counter
+    page_counter += 1  # Increment for each new story segment
+    
     try:
         # Validate theme
         if not theme or len(theme.strip()) < 2:
@@ -138,11 +144,11 @@ async def generate_story(theme: str = "kindness"):
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
         
-        # Generate illustration with Bedrock Stable Diffusion XL
+        # Generate illustration with Bedrock Titan (unique per page)
         images = []
         try:
             image_prompt = f"Children's storybook illustration based on this story: {story_text[:200]}"
-            images = generate_images(image_prompt)
+            images = generate_images(image_prompt, page_number=page_counter)
         except Exception as e:
             print(f"⚠️ Image generation failed: {e}")
         
@@ -163,6 +169,9 @@ async def generate_story(theme: str = "kindness"):
 @app.post("/story/continue", response_model=StoryResponse)
 async def continue_story(request: ContinueRequest):
     """Continue the story based on user's choice"""
+    global page_counter
+    page_counter += 1  # Increment for each continuation
+    
     try:
         # Validate request
         if not request.choice or len(request.choice.strip()) < 2:
@@ -192,11 +201,11 @@ async def continue_story(request: ContinueRequest):
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
         
-        # Generate illustration with Bedrock Stable Diffusion XL
+        # Generate illustration with Bedrock Titan (unique per page)
         images = []
         try:
             image_prompt = f"Children's storybook illustration based on this story: {story_text[:200]}"
-            images = generate_images(image_prompt)
+            images = generate_images(image_prompt, page_number=page_counter)
         except Exception as e:
             print(f"⚠️ Image generation failed: {e}")
         

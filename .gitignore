@@ -30,8 +30,7 @@ Thumbs.db
 story_audio.mp3
 
 # Generated images
-illustration.png
-*.png
+illustration*.png
 
 # Distribution / packaging
 .Python

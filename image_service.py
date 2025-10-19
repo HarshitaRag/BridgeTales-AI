@@ -7,10 +7,15 @@ import base64
 # 👇 Add this line at the top of image_service.py
 load_dotenv()
 
-def generate_images(prompt: str):
-    """Generate images using Amazon Titan Image Generator"""
+def generate_images(prompt: str, page_number: int = 0):
+    """Generate images using Amazon Titan Image Generator
+    
+    Args:
+        prompt: Text description for the image
+        page_number: Unique identifier for this story page
+    """
     try:
-        print("🎨 Generating image with Amazon Titan Image Generator...")
+        print(f"🎨 Generating image for page {page_number} with Amazon Titan...")
         client = boto3.client(
             "bedrock-runtime",
             region_name=os.getenv("AWS_REGION", "us-east-1")
@@ -28,7 +33,7 @@ def generate_images(prompt: str):
                 "cfgScale": 8.0,
                 "height": 512,
                 "width": 512,
-                "seed": 0
+                "seed": page_number  # Use page number as seed for unique images
             }
         })
 
@@ -43,7 +48,8 @@ def generate_images(prompt: str):
         # Titan returns images in base64
         image_base64 = result["images"][0]
 
-        output_path = "illustration.png"
+        # Use unique filename for each page
+        output_path = f"illustration_page_{page_number}.png"
         with open(output_path, "wb") as f:
             f.write(base64.b64decode(image_base64))
 
