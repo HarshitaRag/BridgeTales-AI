@@ -166,11 +166,12 @@ async function generateStory() {
     showLoading();
 
     try {
-        // Get voice preference if user has a profile
+        // Get voice preference and age if user has a profile
         const voiceParam = userProfile ? `&voice=${userProfile.voice}` : '';
+        const ageParam = userProfile ? `&age=${userProfile.age}` : '';
         
         // Call the API
-        const response = await fetch(`${API_BASE_URL}/story/generate?theme=${encodeURIComponent(theme)}${voiceParam}`);
+        const response = await fetch(`${API_BASE_URL}/story/generate?theme=${encodeURIComponent(theme)}${voiceParam}${ageParam}`);
         
         if (!response.ok) {
             const errorData = await response.json();
@@ -224,7 +225,8 @@ async function continueStory(choiceText, isEnding = false) {
                 choice: choiceText,
                 story_context: storyContext,
                 is_ending: isEnding,
-                voice: userProfile ? userProfile.voice : 'Ivy'
+                voice: userProfile ? userProfile.voice : 'Ivy',
+                age: userProfile ? userProfile.age : null
             })
         });
         

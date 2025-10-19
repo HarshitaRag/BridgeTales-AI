@@ -69,16 +69,24 @@ class StoryGenerator:
                             characters: Optional[List[str]] = None, 
                             setting: Optional[str] = None,
                             is_continuation: bool = False,
-                            previous_choice: Optional[str] = None) -> str:
+                            previous_choice: Optional[str] = None,
+                            age: Optional[int] = None) -> str:
         """Build a comprehensive prompt for Bedrock"""
+        # Age-appropriate language guidelines
+        age_guidelines = self._get_age_guidelines(age)
+        
         if is_continuation:
-            system_prompt = """You are a creative interactive storyteller. Continue the adventure story based on the reader's choice.
+            system_prompt = f"""You are a creative interactive storyteller. Continue the adventure story based on the reader's choice.
             Write a complete story segment (3-4 paragraphs) that follows from their decision.
+            {age_guidelines}
             End with 2-3 meaningful choices for what happens next.
+            IMPORTANT: Always include a specific named location (like "Sunny Side Cafe", "The Magic Bookshop", "Riverside Park") where the story takes place.
             Format your response as:
             
             STORY:
             [Your story segment here - make it complete and engaging]
+            
+            LOCATION: [Name of the specific place/business in the story]
             
             CHOICES:
             1. [First choice]
@@ -87,9 +95,10 @@ class StoryGenerator:
             
             user_prompt = f"Continue the story. The reader chose: {previous_choice}\n\nWrite the next segment and provide new choices."
         else:
-            system_prompt = """You are a creative interactive storyteller creating choose-your-own-adventure stories.
+            system_prompt = f"""You are a creative interactive storyteller creating choose-your-own-adventure stories.
             Write an engaging opening for an interactive adventure (3-4 paragraphs).
             Set the scene, introduce the main character, and create an exciting moment.
+            {age_guidelines}
             IMPORTANT: Always include a specific named location (like "Sunny Side Cafe", "The Magic Bookshop", "Riverside Park") where the story takes place.
             End with 2-3 meaningful choices for the reader.
             Format your response as:
@@ -103,7 +112,7 @@ class StoryGenerator:
             1. [First choice]
             2. [Second choice]
             3. [Third choice - optional]"""
-            
+
             user_prompt = f"Start an interactive adventure story about: {prompt}. Include a specific named location or business."
             
             if genre:
@@ -114,6 +123,65 @@ class StoryGenerator:
                 user_prompt += f"\nSetting: {setting}"
         
         return f"{system_prompt}\n\n{user_prompt}"
+    
+    def _get_age_guidelines(self, age: int) -> str:
+        """Generate age-appropriate language guidelines"""
+        if age is None:
+            return ""
+        
+        if age <= 3:
+            return """AGE GUIDELINES (2-3 years old):
+            - Use simple, short sentences (5-8 words max)
+            - Use basic vocabulary (cat, dog, big, small, happy, sad)
+            - Avoid complex concepts or abstract ideas
+            - Focus on familiar objects and actions
+            - Use repetition and rhythm
+            - Keep choices very simple (2 options max)"""
+        
+        elif age <= 5:
+            return """AGE GUIDELINES (4-5 years old):
+            - Use simple sentences (8-12 words max)
+            - Use everyday vocabulary with some descriptive words
+            - Include basic emotions and simple problem-solving
+            - Focus on familiar settings and activities
+            - Use clear cause-and-effect relationships
+            - Keep choices simple and concrete (2-3 options)"""
+        
+        elif age <= 7:
+            return """AGE GUIDELINES (6-7 years old):
+            - Use varied sentence lengths (8-15 words)
+            - Include descriptive adjectives and some new vocabulary
+            - Introduce simple moral lessons and character development
+            - Include some problem-solving and decision-making
+            - Use more complex story structures
+            - Provide 2-3 meaningful choices"""
+        
+        elif age <= 10:
+            return """AGE GUIDELINES (8-10 years old):
+            - Use varied sentence structures and vocabulary
+            - Include character development and emotional depth
+            - Introduce more complex plots and conflicts
+            - Include themes of friendship, courage, and growth
+            - Use descriptive language and dialogue
+            - Provide 2-3 thoughtful choices"""
+        
+        elif age <= 13:
+            return """AGE GUIDELINES (11-13 years old):
+            - Use sophisticated vocabulary and sentence structures
+            - Include complex character development and relationships
+            - Introduce themes of identity, responsibility, and social issues
+            - Include more nuanced moral dilemmas
+            - Use advanced literary techniques
+            - Provide 2-3 complex choices with consequences"""
+        
+        else:
+            return """AGE GUIDELINES (14+ years old):
+            - Use mature vocabulary and complex sentence structures
+            - Include sophisticated themes and character development
+            - Address complex social and personal issues
+            - Include nuanced moral and ethical dilemmas
+            - Use advanced storytelling techniques
+            - Provide 2-3 complex choices with meaningful consequences"""
     
     def _build_openai_prompt(self, prompt: str, genre: Optional[str] = None, 
                            characters: Optional[List[str]] = None, 
@@ -196,7 +264,8 @@ class StoryGenerator:
                                    characters: Optional[List[str]] = None,
                                    setting: Optional[str] = None,
                                    is_continuation: bool = False,
-                                   previous_choice: Optional[str] = None) -> Dict[str, Any]:
+                                   previous_choice: Optional[str] = None,
+                                   age: Optional[int] = None) -> Dict[str, Any]:
         """Generate story using AWS Bedrock"""
         try:
             # Use Claude model (adjust model ID as needed)
@@ -204,7 +273,7 @@ class StoryGenerator:
             
             full_prompt = self._build_bedrock_prompt(
                 prompt, genre, characters, setting, 
-                is_continuation, previous_choice
+                is_continuation, previous_choice, age
             )
             
             body = {
@@ -273,7 +342,8 @@ class StoryGenerator:
                            characters: Optional[List[str]] = None,
                            setting: Optional[str] = None,
                            is_continuation: bool = False,
-                           previous_choice: Optional[str] = None) -> Dict[str, Any]:
+                           previous_choice: Optional[str] = None,
+                           age: Optional[int] = None) -> Dict[str, Any]:
         """Generate a story using the best available service"""
         
         # Try Bedrock first (primary)
@@ -282,7 +352,7 @@ class StoryGenerator:
                 logger.info("🚀 Generating story with AWS Bedrock")
                 return await self._generate_with_bedrock(
                     prompt, max_length, temperature, genre, characters, setting,
-                    is_continuation, previous_choice
+                    is_continuation, previous_choice, age
                 )
             except Exception as e:
                 logger.warning(f"⚠️  Bedrock failed: {e}")

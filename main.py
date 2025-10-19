@@ -60,6 +60,7 @@ class ContinueRequest(BaseModel):
     story_context: str
     is_ending: bool = False  # Flag to generate a happy ending
     voice: str = "Ivy"  # User's voice preference
+    age: int = None  # User's age for age-appropriate content
 
 class HealthResponse(BaseModel):
     status: str
@@ -183,7 +184,7 @@ async def health_check():
     )
 
 @app.get("/story/generate", response_model=StoryResponse)
-async def generate_story(theme: str = "kindness", voice: str = "Ivy"):
+async def generate_story(theme: str = "kindness", voice: str = "Ivy", age: int = None):
     """Generate a story based on the provided theme"""
     global page_counter
     page_counter += 1  # Increment for each new story segment
@@ -204,7 +205,8 @@ async def generate_story(theme: str = "kindness", voice: str = "Ivy"):
             prompt=prompt,
             max_length=1000,
             temperature=0.7,
-            is_continuation=False
+            is_continuation=False,
+            age=age
         )
         
         story_text = result["story"]
@@ -265,7 +267,8 @@ async def continue_story(request: ContinueRequest):
                 prompt=ending_prompt,
                 max_length=1000,
                 temperature=0.7,
-                is_continuation=False
+                is_continuation=False,
+                age=request.age
             )
             story_text = result["story"]
             choices = []  # No more choices after ending
@@ -276,7 +279,8 @@ async def continue_story(request: ContinueRequest):
                 max_length=1000,
                 temperature=0.7,
                 is_continuation=True,
-                previous_choice=request.choice
+                previous_choice=request.choice,
+                age=request.age
             )
             story_text = result["story"]
             choices = result.get("choices", [])
