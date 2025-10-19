@@ -282,11 +282,144 @@ function displayIllustrations(images) {
         
         illustrationContent.innerHTML = `
             <img src="${imageUrl}" alt="Story illustration" class="story-illustration-img" onerror="this.style.display='none'" />
+            <!-- Smart contextual location overlays -->
+            <div class="smart-location-overlays" id="smartLocationOverlays" style="display: none;">
+                <!-- Dynamic overlays will be added here -->
+            </div>
         `;
         illustrationBox.style.display = 'block';
+        
+        // Analyze the image and add smart overlays
+        setTimeout(() => {
+            addSmartLocationOverlays();
+        }, 1500);
     } else {
         illustrationBox.style.display = 'none';
     }
+}
+
+// Add smart contextual location overlays based on story content
+function addSmartLocationOverlays() {
+    const overlaysContainer = document.getElementById('smartLocationOverlays');
+    if (!overlaysContainer) return;
+    
+    // Get story context to determine what to highlight
+    const storyText = document.getElementById('storyText').textContent.toLowerCase();
+    const overlays = [];
+    
+    // Analyze story content for specific elements
+    if (storyText.includes('cafe') || storyText.includes('coffee') || storyText.includes('restaurant') || storyText.includes('food')) {
+        overlays.push({
+            type: 'cafe',
+            text: 'See this café in real time?',
+            position: { top: '20%', left: '15%' },
+            icon: '☕'
+        });
+    }
+    
+    if (storyText.includes('park') || storyText.includes('garden') || storyText.includes('nature') || storyText.includes('tree')) {
+        overlays.push({
+            type: 'park',
+            text: 'Find this park near you?',
+            position: { top: '30%', right: '20%' },
+            icon: '🌳'
+        });
+    }
+    
+    if (storyText.includes('book') || storyText.includes('library') || storyText.includes('read') || storyText.includes('story')) {
+        overlays.push({
+            type: 'bookstore',
+            text: 'Visit this bookstore?',
+            position: { bottom: '25%', left: '10%' },
+            icon: '📚'
+        });
+    }
+    
+    if (storyText.includes('shop') || storyText.includes('store') || storyText.includes('buy') || storyText.includes('market')) {
+        overlays.push({
+            type: 'shop',
+            text: 'Shop at this place?',
+            position: { bottom: '20%', right: '15%' },
+            icon: '🛍️'
+        });
+    }
+    
+    if (storyText.includes('playground') || storyText.includes('play') || storyText.includes('fun') || storyText.includes('game')) {
+        overlays.push({
+            type: 'playground',
+            text: 'Play at this place?',
+            position: { top: '60%', left: '50%' },
+            icon: '🎪'
+        });
+    }
+    
+    // If no specific elements found, add a general overlay
+    if (overlays.length === 0) {
+        overlays.push({
+            type: 'general',
+            name: 'Nearby',
+            position: { top: '25%', left: '5%' },
+            icon: '📍'
+        });
+    }
+    
+    // Limit to 3 overlays maximum
+    const limitedOverlays = overlays.slice(0, 3);
+    
+    // Define side positions for 3 overlays
+    const sidePositions = [
+        { top: '25%', left: '5%' },    // Left side
+        { top: '50%', right: '5%' },  // Right side  
+        { top: '75%', left: '5%' }    // Left side bottom
+    ];
+    
+    // Update positions to be on sides
+    limitedOverlays.forEach((overlay, index) => {
+        overlay.position = sidePositions[index];
+        overlay.name = overlay.name || overlay.text?.split(' ')[0] || 'Nearby';
+    });
+    
+    // Create and display overlays with staggered animation
+    limitedOverlays.forEach((overlay, index) => {
+        setTimeout(() => {
+            const overlayElement = createSmartOverlay(overlay, index);
+            overlaysContainer.appendChild(overlayElement);
+        }, index * 400); // 400ms delay between each overlay
+    });
+    
+    overlaysContainer.style.display = 'block';
+}
+
+// Create a smart contextual overlay
+function createSmartOverlay(overlay, index) {
+    const overlayDiv = document.createElement('div');
+    overlayDiv.className = 'smart-location-overlay';
+    
+    // Handle both left and right positioning
+    let positionStyle = '';
+    if (overlay.position.left) {
+        positionStyle = `top: ${overlay.position.top}; left: ${overlay.position.left};`;
+    } else if (overlay.position.right) {
+        positionStyle = `top: ${overlay.position.top}; right: ${overlay.position.right};`;
+    }
+    
+    overlayDiv.style.cssText = `
+        position: absolute;
+        ${positionStyle}
+        transform: translateY(-50%);
+        z-index: 10;
+        animation: fadeInScale 1.5s ease-out ${index * 0.4}s both;
+    `;
+    
+    overlayDiv.innerHTML = `
+        <button class="smart-overlay-btn" onclick="findNearbyBusinesses('${overlay.type}')">
+            <span class="smart-icon">${overlay.icon}</span>
+            <span class="smart-text">${overlay.name}</span>
+            <div class="smart-pulse-ring"></div>
+        </button>
+    `;
+    
+    return overlayDiv;
 }
 
 // Display choice buttons
@@ -517,18 +650,28 @@ async function getCurrentLocation() {
 
 function showLocationButton() {
     const locationBtn = document.getElementById('locationBtn');
+    const locationOverlay = document.getElementById('locationOverlay');
+    
     if (currentStoryData) {
-        locationBtn.style.display = 'inline-block';
-        locationBtn.style.backgroundColor = '#10b981';
-        locationBtn.style.color = 'white';
-        console.log('Location button should be visible now');
-    } else {
+        // Hide the bottom button
         locationBtn.style.display = 'none';
-        console.log('Location button hidden - currentStoryData:', !!currentStoryData);
+        
+        // Show the animated overlay on the image
+        if (locationOverlay) {
+            locationOverlay.style.display = 'block';
+            console.log('Animated location overlay should be visible on image');
+        }
+    } else {
+        // Hide both buttons
+        locationBtn.style.display = 'none';
+        if (locationOverlay) {
+            locationOverlay.style.display = 'none';
+        }
+        console.log('Location buttons hidden - currentStoryData:', !!currentStoryData);
     }
 }
 
-async function findNearbyBusinesses() {
+async function findNearbyBusinesses(contextType = 'general') {
     if (!userLocation) {
         try {
             await getCurrentLocation();
@@ -596,23 +739,68 @@ function displayBusinesses(businesses) {
     const businessesContainer = document.getElementById('localBusinesses');
     const businessesList = document.getElementById('businessesList');
     
+    // Clear existing floating business icons
+    const existingFloating = document.querySelectorAll('.floating-business-icon');
+    existingFloating.forEach(icon => icon.remove());
+    
     if (businesses.length === 0) {
         businessesList.innerHTML = '<p class="no-businesses">No related businesses found in your area.</p>';
-    } else {
-        businessesList.innerHTML = businesses.map(business => `
-            <div class="business-card">
-                <h4 class="business-name">${business.name}</h4>
-                <p class="business-address">${business.address}</p>
-                ${business.phone ? `<p class="business-phone">📞 ${business.phone}</p>` : ''}
-                ${business.website ? `<p class="business-website"><a href="${business.website}" target="_blank">🌐 Visit Website</a></p>` : ''}
-                ${business.categories.length > 0 ? `<p class="business-categories">🏷️ ${business.categories.join(', ')}</p>` : ''}
-                ${business.distance ? `<p class="business-distance">📍 ${Math.round(business.distance)}m away</p>` : ''}
-            </div>
-        `).join('');
+        businessesContainer.style.display = 'block';
+        return;
     }
+    
+    // Display businesses in the bottom section
+    businessesList.innerHTML = businesses.map(business => `
+        <div class="business-card">
+            <div class="business-header">
+                <div class="business-icon">${getBusinessIcon(business.categories || business.name)}</div>
+                <div class="business-info">
+                    <h4 class="business-name">${business.name}</h4>
+                    <p class="business-address">${business.address}</p>
+                </div>
+                <div class="business-distance">${business.distance ? Math.round(business.distance) + 'm' : ''}</div>
+            </div>
+            ${business.phone ? `<p class="business-phone">📞 ${business.phone}</p>` : ''}
+            ${business.website ? `<p class="business-website"><a href="${business.website}" target="_blank">🌐 Visit Website</a></p>` : ''}
+            ${business.categories && business.categories.length > 0 ? `<p class="business-categories">🏷️ ${business.categories.join(', ')}</p>` : ''}
+        </div>
+    `).join('');
     
     businessesContainer.style.display = 'block';
     businessesContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Get appropriate icon for business type
+function getBusinessIcon(categories) {
+    if (!categories) return '📍';
+    
+    // Handle both string and array cases
+    let catString = '';
+    if (Array.isArray(categories)) {
+        catString = categories.join(' ').toLowerCase();
+    } else {
+        catString = categories.toString().toLowerCase();
+    }
+    
+    if (catString.includes('restaurant') || catString.includes('food') || catString.includes('cafe')) return '🍽️';
+    if (catString.includes('art') || catString.includes('gallery') || catString.includes('museum')) return '🎨';
+    if (catString.includes('park') || catString.includes('garden')) return '🌳';
+    if (catString.includes('book') || catString.includes('library')) return '📚';
+    if (catString.includes('shop') || catString.includes('store') || catString.includes('market')) return '🛍️';
+    if (catString.includes('playground') || catString.includes('play')) return '🎪';
+    return '📍'; // Default icon
+}
+
+// Show business details in a modal or expanded view
+function showBusinessDetails(name, address, phone, website, categories, distance) {
+    // Create a simple alert for now, but this could be a modal
+    let details = `🏢 ${name}\n📍 ${address}`;
+    if (phone) details += `\n📞 ${phone}`;
+    if (website) details += `\n🌐 ${website}`;
+    if (categories) details += `\n🏷️ ${categories}`;
+    if (distance) details += `\n📍 ${distance}`;
+    
+    alert(details);
 }
 
 function closeBusinesses() {

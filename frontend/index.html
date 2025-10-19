@@ -85,7 +85,16 @@
                         <div class="illustration-header">
                             <span class="illustration-label">Story Illustration</span>
                         </div>
-                        <div id="illustrationContent"></div>
+                        <div id="illustrationContent" class="illustration-content">
+                            <!-- Animated location button overlay -->
+                            <div class="location-overlay" id="locationOverlay" style="display: none;">
+                                <button class="location-overlay-btn" onclick="findNearbyBusinesses()">
+                                    <span class="location-icon">📍</span>
+                                    <span class="location-text">See something like this in real time?</span>
+                                    <div class="pulse-ring"></div>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -123,7 +132,8 @@
                     <button class="action-button" onclick="newStory()">
                         <span>New Story</span>
                     </button>
-                    <button class="action-button location-btn" id="locationBtn" onclick="findNearbyBusinesses()" style="display: inline-block;">
+                    <!-- Location button moved to image overlay -->
+                    <button class="action-button location-btn" id="locationBtn" onclick="findNearbyBusinesses()" style="display: none;">
                         <span>📍 See something like this near me?</span>
                     </button>
                 </div>
@@ -146,6 +156,6 @@
         <p>Powered by AI • Creating stories that inspire</p>
     </footer>
 
-    <script src="static/js/app.js?v=5"></script>
+    <script src="static/js/app.js?v=12"></script>
 </body>
 </html>
