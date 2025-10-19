@@ -8,9 +8,9 @@ import os
 import json
 import asyncio
 from datetime import datetime
-from voice_service import generate_voice
+#from voice_service import generate_voice
 from image_service import generate_image
-
+from voice_service import generate_voice_with_polly
 # Import our story generation service and config
 from services.story_generator import StoryGenerator
 from config import Config
@@ -121,9 +121,11 @@ async def generate_story(theme: str = "kindness"):
         story_text = result["story"]
         choices = result.get("choices", [])
         
-        # Generate voice narration (optional - may fail if quota exceeded)
-        voice_file = generate_voice(story_text)
-        if not voice_file:
+        # Generate voice narration with AWS Polly
+        try:
+            voice_file = generate_voice_with_polly(story_text, voice_id="Joanna")
+        except Exception as e:
+            print(f"⚠️ Voice generation failed: {e}")
             voice_file = ""  # Empty string if voice generation fails
         
         # Generate illustration
@@ -167,9 +169,11 @@ async def continue_story(request: ContinueRequest):
         story_text = result["story"]
         choices = result.get("choices", [])
         
-        # Generate voice narration (optional - may fail if quota exceeded)
-        voice_file = generate_voice(story_text)
-        if not voice_file:
+        # Generate voice narration with AWS Polly
+        try:
+            voice_file = generate_voice_with_polly(story_text, voice_id="Joanna")
+        except Exception as e:
+            print(f"⚠️ Voice generation failed: {e}")
             voice_file = ""  # Empty string if voice generation fails
         
         # Generate illustration

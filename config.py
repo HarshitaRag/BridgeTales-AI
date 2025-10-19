@@ -45,13 +45,13 @@ class Config:
         if not cls.OPENAI_API_KEY:
             warnings.append("OPENAI_API_KEY (optional backup)")
         
-        # ElevenLabs is required for voice generation
+        # ElevenLabs is optional (now using AWS Polly for voice)
         if not cls.ELEVENLABS_API_KEY:
-            missing_configs.append("ELEVENLABS_API_KEY")
+            warnings.append("ELEVENLABS_API_KEY (optional - using AWS Polly instead)")
         
-        # Gemini is required for image generation
+        # Gemini is optional for image generation
         if not cls.GEMINI_API_KEY:
-            missing_configs.append("GEMINI_API_KEY")
+            warnings.append("GEMINI_API_KEY (optional - for illustrations)")
         
         if missing_configs:
             print(f"❌ Missing required configuration: {', '.join(missing_configs)}")

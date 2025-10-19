@@ -1,34 +1,30 @@
+# voice_service.py
 import os
-from elevenlabs import ElevenLabs, save
+import boto3
 
-def generate_voice(story_text: str, voice_id="21m00Tcm4TlvDq8ikWAM"):
-    """Generate narration audio using ElevenLabs API
-    
-    Default voice_id is Rachel (21m00Tcm4TlvDq8ikWAM) - a pre-made voice
-    Other popular pre-made voices:
-    - Rachel: 21m00Tcm4TlvDq8ikWAM
-    - Drew: 29vD33N1CtxCmqQRPOHJ
-    - Clyde: 2EiwWnXFnvU5JabPnv8n
-    - Paul: 5Q0t7uMcjvnagumLfvZi
-    """
-    try:
-        client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+def generate_voice_with_polly(text: str, voice_id: str = "Joanna") -> str:
+    """Synthesize 'text' to MP3 via Amazon Polly and return the local file path."""
+    polly = boto3.client(
+        "polly",
+        region_name=os.getenv("AWS_REGION", "us-east-1"),
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    )
 
-        response = client.text_to_speech.convert(
-            voice_id=voice_id,
-            model_id="eleven_turbo_v2",
-            text=story_text
-        )
+    # Basic safety: Polly max text length ~3000 chars; truncate if huge.
+    safe_text = text[:2800]
 
-        # Save MP3 locally
-        output_file = "story_audio.mp3"
-        with open(output_file, "wb") as f:
-            for chunk in response:
-                f.write(chunk)
-        
-        print(f"✅ Voice narration saved to {output_file}")
-        return output_file
-    except Exception as e:
-        print(f"⚠️ Voice generation failed: {e}")
-        print(f"ℹ️  Story will continue without audio")
-        return None
+    resp = polly.synthesize_speech(
+        Text=safe_text,
+        OutputFormat="mp3",
+        VoiceId=voice_id  # good voices: Joanna, Matthew, Amy, Brian, Salli
+    )
+
+    out_path = "story_audio.mp3"
+    with open(out_path, "wb") as f:
+        audio_stream = resp.get("AudioStream")
+        if audio_stream:
+            f.write(audio_stream.read())
+        else:
+            raise RuntimeError("Polly returned no AudioStream.")
+    return out_path
