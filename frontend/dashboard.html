@@ -92,10 +92,61 @@
             font-size: 4rem;
             margin-bottom: 1rem;
         }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
     </style>
 </head>
 <body>
     <a href="/" class="back-btn">← Back to Stories</a>
+    
+    <!-- Parent Email Report Button -->
+    <button onclick="sendParentReport()" style="
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        padding: 0.7rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        font-family: 'Quicksand', sans-serif;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)'">
+        📧 Send Parent Report
+    </button>
+    
+    <!-- Email Sent Notification -->
+    <div id="emailNotification" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 40px 60px;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        z-index: 100000;
+        text-align: center;
+        animation: slideIn 0.5s ease-out;
+    ">
+        <div style="font-size: 4rem; margin-bottom: 15px;">📧</div>
+        <h2 style="color: #667eea; font-size: 2rem; margin-bottom: 10px;">Report Sent!</h2>
+        <p style="color: #666; font-size: 1.1rem; margin-bottom: 15px;">Weekly progress report sent to:</p>
+        <p style="color: #667eea; font-size: 1.3rem; font-weight: 600;" id="parentEmail">parent@email.com</p>
+    </div>
     
     <div class="dashboard-container">
         <div class="dashboard-header">
@@ -278,6 +329,66 @@
             // Store book ID and redirect to read
             localStorage.setItem('viewingBookId', bookId);
             window.location.href = '/';
+        }
+        
+        // Send parent report
+        function sendParentReport() {
+            const finishedBooks = JSON.parse(localStorage.getItem('finishedBooks') || '[]');
+            const paymentsHistory = JSON.parse(localStorage.getItem('paymentsHistory') || '[]');
+            const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            
+            // Calculate stats
+            const totalStories = finishedBooks.length;
+            const totalPages = finishedBooks.reduce((sum, book) => sum + book.pages.length, 0);
+            const businessesSupported = paymentsHistory.length;
+            const totalDonated = paymentsHistory.reduce((sum, payment) => sum + (payment.total || 0), 0);
+            
+            // Mock email content (in production, this would call a backend API)
+            const emailContent = `
+📚 BridgeTales Weekly Report for ${userProfile.name || 'Your Child'}
+
+READING PROGRESS:
+✅ Stories Completed: ${totalStories}
+✅ Pages Read: ${totalPages}
+✅ Reading Level: ${getReadingLevel(userProfile.age || 7)}
+
+COMMUNITY IMPACT:
+🏪 Local Businesses Supported: ${businessesSupported}
+💰 Total Community Support: $${totalDonated.toFixed(2)}
+
+ACHIEVEMENTS UNLOCKED:
+${totalStories >= 1 ? '🏆 First Story Complete!' : ''}
+${totalStories >= 5 ? '🏆 Prolific Writer!' : ''}
+${businessesSupported >= 3 ? '🏆 Community Helper!' : ''}
+
+Keep up the great work!
+- The BridgeTales Team
+            `;
+            
+            console.log('Email Report:', emailContent);
+            
+            // Show notification
+            const notification = document.getElementById('emailNotification');
+            const parentEmailEl = document.getElementById('parentEmail');
+            
+            // Use parent email if available, otherwise default
+            const parentEmail = userProfile.parentEmail || 'parent@email.com';
+            parentEmailEl.textContent = parentEmail;
+            
+            notification.style.display = 'block';
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Get reading level based on age
+        function getReadingLevel(age) {
+            if (age <= 5) return "Beginning Reader 🌱";
+            if (age <= 8) return "Growing Reader 🌿";
+            if (age <= 12) return "Advanced Reader 🌳";
+            return "Expert Reader 🦅";
         }
         
         // Load books on page load
