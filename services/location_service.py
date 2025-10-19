@@ -137,42 +137,62 @@ class LocationService:
     ) -> List[Dict]:
         """Search using AWS Location Service text search - BUSINESSES ONLY"""
         try:
-            # Prepare search parameters with business category filters
+            # Prepare search parameters - ONLY cafes and parks
             search_params = {
                 'IndexName': self.place_index_name,
                 'Text': search_text,
                 'BiasPosition': [longitude, latitude],  # Note: AWS uses [lng, lat] format
-                'MaxResults': max_results * 3,  # Get more results to filter
+                'MaxResults': max_results * 5,  # Get many more results to filter for local only
                 'FilterCategories': [
-                    'Restaurant',
                     'Cafe',
-                    'Store',
-                    'Shop',
+                    'CoffeeShop',
                     'Park',
                     'Recreation',
-                    'Entertainment',
-                    'Food',
-                    'Shopping'
+                    'Garden'
                 ]
             }
             
             # Perform the search
             response = self.client.search_place_index_for_text(**search_params)
             
-            # Extract and format business information - FILTER OUT RESIDENTIAL
+            # Extract and format business information - LOCAL BUSINESSES ONLY
             businesses = []
+            
+            # List of chain stores to exclude (only want local businesses)
+            chain_exclusions = [
+                'starbucks', 'mcdonalds', 'burger king', 'wendys', 'subway', 'taco bell',
+                'pizza hut', 'dominos', 'papa johns', 'kfc', 'popeyes', 'chipotle',
+                'panera', 'dunkin', 'tim hortons', 'costa', 'peets', 'caribou',
+                'target', 'walmart', 'costco', 'cvs', 'walgreens', 'rite aid',
+                'whole foods', '7-eleven', 'circle k', 'shell', 'chevron', 'bp',
+                'applebees', 'olive garden', 'chilis', 'red lobster', 'outback',
+                'ihop', 'dennys', 'cracker barrel', 'buffalo wild wings'
+            ]
+            
             for result in response.get('Results', []):
                 place = result.get('Place', {})
                 categories = place.get('Categories', [])
                 label = place.get('Label', 'Unknown')
+                name = label.split(',')[0].lower()  # Get business name
                 
                 # Skip residential addresses and street addresses
                 if any(skip in label.lower() for skip in ['street', 'avenue', 'road', 'lane', 'drive', 'way']):
                     if not categories:  # Only skip if no business categories
                         continue
                 
-                # Only include if it has business categories
-                if categories and len(categories) > 0:
+                # Skip chain stores - ONLY LOCAL BUSINESSES
+                if any(chain in name for chain in chain_exclusions):
+                    continue
+                
+                # Only include cafes and parks
+                relevant_categories = ['cafe', 'coffee', 'park', 'garden', 'recreation']
+                has_relevant_category = any(
+                    any(rel_cat in cat.lower() for rel_cat in relevant_categories)
+                    for cat in categories
+                )
+                
+                # Only include if it has cafe/park categories
+                if has_relevant_category and categories and len(categories) > 0:
                     business_info = {
                         'name': label.split(',')[0],  # Just the business name, not full address
                         'address': ', '.join(label.split(',')[1:]).strip() if ',' in label else place.get('Address', ''),

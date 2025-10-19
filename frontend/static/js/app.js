@@ -481,11 +481,11 @@ async function openVisaModal() {
         // Get user's location
         const position = await getUserLocation();
         
-        // Search for specific business types (cafes, restaurants, stores, parks)
-        const businessTypes = ['cafe', 'restaurant', 'store', 'park', 'shop'];
+        // Search for LOCAL cafes and parks ONLY (no chains!)
+        const businessTypes = ['local cafe', 'coffee shop', 'park', 'community garden'];
         const randomType = businessTypes[Math.floor(Math.random() * businessTypes.length)];
         
-        // Fetch real nearby businesses using text search
+        // Fetch real nearby LOCAL businesses using text search
         const response = await fetch(`${API_BASE_URL}/location/search?query=${randomType}&latitude=${position.latitude}&longitude=${position.longitude}&max_results=5`);
         
         if (!response.ok) {
