@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Stories - BridgeTales</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            padding: 0.7rem 1.5rem;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 25px;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .book-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .book-theme {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .book-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .book-pages {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back to Stories</a>
+    
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="title">My Story Collection</h1>
+            <p class="subtitle">All your completed adventures</p>
+        </div>
+        
+        <!-- Story Statistics -->
+        <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="totalStories">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Stories Created</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="totalPages">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Pages Written</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="businessesSupported">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Businesses Supported</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="totalDonated">$0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Community Support</div>
+            </div>
+        </div>
+        
+        <div id="booksGrid" class="books-grid"></div>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">📚</div>
+            <h2>No stories yet</h2>
+            <p>Complete your first story to see it here!</p>
+        </div>
+    </div>
+    
+    <script>
+        // Load and display finished books
+        function loadFinishedBooks() {
+            const finishedBooks = JSON.parse(localStorage.getItem('finishedBooks') || '[]');
+            const paymentsHistory = JSON.parse(localStorage.getItem('paymentsHistory') || '[]');
+            const booksGrid = document.getElementById('booksGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Calculate statistics
+            const totalStories = finishedBooks.length;
+            const totalPages = finishedBooks.reduce((sum, book) => sum + book.pages.length, 0);
+            const businessesSupported = paymentsHistory.length;
+            const totalDonated = paymentsHistory.reduce((sum, payment) => sum + (payment.total || 0), 0);
+            
+            // Update stat cards
+            document.getElementById('totalStories').textContent = totalStories;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('businessesSupported').textContent = businessesSupported;
+            document.getElementById('totalDonated').textContent = `$${totalDonated.toFixed(2)}`;
+            
+            if (finishedBooks.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            booksGrid.innerHTML = finishedBooks.map(book => `
+                <div class="book-card" onclick="viewBook(${book.id})">
+                    <div class="book-theme">${book.theme.charAt(0).toUpperCase() + book.theme.slice(1)}</div>
+                    <div class="book-date">Completed: ${new Date(book.completedAt).toLocaleDateString()}</div>
+                    <div class="book-pages">📖 ${book.pages.length} pages</div>
+                    <div class="book-preview">${book.pages[0].story.substring(0, 100)}...</div>
+                </div>
+            `).join('');
+        }
+        
+        function viewBook(bookId) {
+            // Store book ID and redirect to read
+            localStorage.setItem('viewingBookId', bookId);
+            window.location.href = '/';
+        }
+        
+        // Load books on page load
+        document.addEventListener('DOMContentLoaded', loadFinishedBooks);
+    </script>
+</body>
+</html>
