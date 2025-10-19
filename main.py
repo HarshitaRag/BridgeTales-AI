@@ -40,7 +40,7 @@ app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 class StoryResponse(BaseModel):
     theme: str
     story: str
-    voice_file: str
+    voice_file: Optional[str] = ""
     image_description: str = ""
     choices: List[str] = []
     
@@ -122,15 +122,21 @@ async def generate_story(theme: str = "kindness"):
         choices = result.get("choices", [])
         
         # Generate voice narration with AWS Polly (child voice)
+        voice_file = ""
         try:
-            voice_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
+            result_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
+            if result_file:
+                voice_file = result_file
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
-            voice_file = ""  # Empty string if voice generation fails
         
-        # Generate illustration
-        image_result = generate_image(story_text, theme)
-        image_description = image_result.get("description", "")
+        # Generate illustration (optional)
+        image_description = ""
+        try:
+            image_result = generate_image(story_text, theme)
+            image_description = image_result.get("description", "")
+        except Exception as e:
+            print(f"⚠️ Image generation failed: {e}")
         
         return StoryResponse(
             theme=theme,
@@ -170,15 +176,21 @@ async def continue_story(request: ContinueRequest):
         choices = result.get("choices", [])
         
         # Generate voice narration with AWS Polly (child voice)
+        voice_file = ""
         try:
-            voice_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
+            result_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
+            if result_file:
+                voice_file = result_file
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
-            voice_file = ""  # Empty string if voice generation fails
         
-        # Generate illustration
-        image_result = generate_image(story_text, request.theme)
-        image_description = image_result.get("description", "")
+        # Generate illustration (optional)
+        image_description = ""
+        try:
+            image_result = generate_image(story_text, request.theme)
+            image_description = image_result.get("description", "")
+        except Exception as e:
+            print(f"⚠️ Image generation failed: {e}")
         
         return StoryResponse(
             theme=request.theme,
