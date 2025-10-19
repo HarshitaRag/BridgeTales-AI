@@ -3,11 +3,11 @@ import json
 from datetime import datetime
 
 try:
-    from pinecone.grpc import PineconeGRPC as Pinecone
-    from pinecone import ServerlessSpec
+    from pinecone import Pinecone
+    from pinecone.core.grpc.protos.vector_service_pb2 import Vector
 except ImportError:
     # Fallback for older versions
-    from pinecone import Pinecone, ServerlessSpec
+    from pinecone import Pinecone
 
 # Initialize Pinecone
 pc = Pinecone(api_key="pcsk_6vhZMA_4Rh1K18qztL13jHvvmd8vUw7B2ahbWzh8qc7r6RtnwGh7PJf4eRuZxZH3zczQTL")
@@ -28,7 +28,12 @@ def get_or_create_index():
                 name=INDEX_NAME,
                 dimension=384,  # Standard dimension for text embeddings
                 metric='cosine',
-                spec=ServerlessSpec(cloud='aws', region='us-east-1')
+                spec={
+                    "serverless": {
+                        "cloud": "aws",
+                        "region": "us-east-1"
+                    }
+                }
             )
         
         return pc.Index(INDEX_NAME)
