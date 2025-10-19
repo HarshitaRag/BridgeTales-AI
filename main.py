@@ -121,9 +121,9 @@ async def generate_story(theme: str = "kindness"):
         story_text = result["story"]
         choices = result.get("choices", [])
         
-        # Generate voice narration with AWS Polly
+        # Generate voice narration with AWS Polly (child voice)
         try:
-            voice_file = generate_voice_with_polly(story_text, voice_id="Joanna")
+            voice_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
             voice_file = ""  # Empty string if voice generation fails
@@ -169,9 +169,9 @@ async def continue_story(request: ContinueRequest):
         story_text = result["story"]
         choices = result.get("choices", [])
         
-        # Generate voice narration with AWS Polly
+        # Generate voice narration with AWS Polly (child voice)
         try:
-            voice_file = generate_voice_with_polly(story_text, voice_id="Joanna")
+            voice_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
         except Exception as e:
             print(f"⚠️ Voice generation failed: {e}")
             voice_file = ""  # Empty string if voice generation fails
