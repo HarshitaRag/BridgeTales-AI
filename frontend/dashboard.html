@@ -123,6 +123,16 @@
             </div>
         </div>
         
+        <!-- Achievements Section -->
+        <div class="achievements-section" style="margin-bottom: 3rem;">
+            <h2 style="font-family: 'Crimson Text', serif; font-size: 2rem; color: var(--primary-color); margin-bottom: 1.5rem; text-align: center;">🏆 Your Achievements</h2>
+            <div class="achievements-grid" id="achievementsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <!-- Achievements will be populated here -->
+            </div>
+        </div>
+        
+        <h2 style="font-family: 'Crimson Text', serif; font-size: 2rem; color: var(--primary-color); margin-bottom: 1.5rem; text-align: center;">📖 Your Stories</h2>
+        
         <div id="booksGrid" class="books-grid"></div>
         
         <div id="emptyState" class="empty-state" style="display: none;">
@@ -133,6 +143,100 @@
     </div>
     
     <script>
+        // Load and display achievements
+        function loadAchievements() {
+            const finishedBooks = JSON.parse(localStorage.getItem('finishedBooks') || '[]');
+            const paymentsHistory = JSON.parse(localStorage.getItem('paymentsHistory') || '[]');
+            const achievementsGrid = document.getElementById('achievementsGrid');
+            
+            const achievements = [];
+            
+            // First Story Achievement
+            if (finishedBooks.length >= 1) {
+                achievements.push({
+                    icon: '📚',
+                    title: 'First Story',
+                    description: 'Completed your first adventure!',
+                    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    unlocked: true,
+                    date: new Date(finishedBooks[0].completedAt).toLocaleDateString()
+                });
+            }
+            
+            // Prolific Writer (5 stories)
+            if (finishedBooks.length >= 5) {
+                achievements.push({
+                    icon: '✍️',
+                    title: 'Prolific Writer',
+                    description: 'Created 5 amazing stories!',
+                    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    unlocked: true
+                });
+            }
+            
+            // Community Helper (supported 3 businesses)
+            if (paymentsHistory.length >= 3) {
+                achievements.push({
+                    icon: '🤝',
+                    title: 'Community Helper',
+                    description: 'Supported 3 local businesses!',
+                    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    unlocked: true
+                });
+            }
+            
+            // Generous Heart ($50+ donated)
+            const totalDonated = paymentsHistory.reduce((sum, p) => sum + (p.total || 0), 0);
+            if (totalDonated >= 50) {
+                achievements.push({
+                    icon: '💝',
+                    title: 'Generous Heart',
+                    description: `Donated $${totalDonated.toFixed(2)} to local community!`,
+                    color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                    unlocked: true
+                });
+            }
+            
+            // Add locked achievements
+            if (finishedBooks.length < 1) {
+                achievements.push({
+                    icon: '🔒',
+                    title: 'First Story',
+                    description: 'Complete your first story to unlock!',
+                    color: 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)',
+                    unlocked: false
+                });
+            }
+            
+            if (finishedBooks.length < 5 && finishedBooks.length >= 1) {
+                achievements.push({
+                    icon: '🔒',
+                    title: 'Prolific Writer',
+                    description: `${5 - finishedBooks.length} more stories to unlock!`,
+                    color: 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)',
+                    unlocked: false
+                });
+            }
+            
+            // Render achievements
+            achievementsGrid.innerHTML = achievements.map(ach => `
+                <div class="achievement-card" style="
+                    background: ${ach.color};
+                    color: white;
+                    padding: 1.5rem;
+                    border-radius: 15px;
+                    text-align: center;
+                    ${!ach.unlocked ? 'opacity: 0.6; filter: grayscale(100%);' : 'box-shadow: 0 10px 30px rgba(0,0,0,0.2);'}
+                    transition: all 0.3s ease;
+                ">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">${ach.icon}</div>
+                    <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 5px;">${ach.title}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">${ach.description}</div>
+                    ${ach.unlocked && ach.date ? `<div style="font-size: 0.75rem; margin-top: 8px; opacity: 0.7;">Unlocked: ${ach.date}</div>` : ''}
+                </div>
+            `).join('');
+        }
+        
         // Load and display finished books
         function loadFinishedBooks() {
             const finishedBooks = JSON.parse(localStorage.getItem('finishedBooks') || '[]');
@@ -151,6 +255,9 @@
             document.getElementById('totalPages').textContent = totalPages;
             document.getElementById('businessesSupported').textContent = businessesSupported;
             document.getElementById('totalDonated').textContent = `$${totalDonated.toFixed(2)}`;
+            
+            // Load achievements
+            loadAchievements();
             
             if (finishedBooks.length === 0) {
                 emptyState.style.display = 'block';
