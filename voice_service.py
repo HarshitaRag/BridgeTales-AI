@@ -11,19 +11,24 @@ def generate_voice(story_text: str, voice_id="21m00Tcm4TlvDq8ikWAM"):
     - Clyde: 2EiwWnXFnvU5JabPnv8n
     - Paul: 5Q0t7uMcjvnagumLfvZi
     """
-    client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+    try:
+        client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
-    response = client.text_to_speech.convert(
-        voice_id=voice_id,
-        model_id="eleven_turbo_v2",
-        text=story_text
-    )
+        response = client.text_to_speech.convert(
+            voice_id=voice_id,
+            model_id="eleven_turbo_v2",
+            text=story_text
+        )
 
-    # Save MP3 locally
-    output_file = "story_audio.mp3"
-    with open(output_file, "wb") as f:
-        for chunk in response:
-            f.write(chunk)
-    
-    print(f"✅ Voice narration saved to {output_file}")
-    return output_file
+        # Save MP3 locally
+        output_file = "story_audio.mp3"
+        with open(output_file, "wb") as f:
+            for chunk in response:
+                f.write(chunk)
+        
+        print(f"✅ Voice narration saved to {output_file}")
+        return output_file
+    except Exception as e:
+        print(f"⚠️ Voice generation failed: {e}")
+        print(f"ℹ️  Story will continue without audio")
+        return None

@@ -121,8 +121,10 @@ async def generate_story(theme: str = "kindness"):
         story_text = result["story"]
         choices = result.get("choices", [])
         
-        # Generate voice narration
+        # Generate voice narration (optional - may fail if quota exceeded)
         voice_file = generate_voice(story_text)
+        if not voice_file:
+            voice_file = ""  # Empty string if voice generation fails
         
         # Generate illustration
         image_result = generate_image(story_text, theme)
@@ -165,8 +167,10 @@ async def continue_story(request: ContinueRequest):
         story_text = result["story"]
         choices = result.get("choices", [])
         
-        # Generate voice narration
+        # Generate voice narration (optional - may fail if quota exceeded)
         voice_file = generate_voice(story_text)
+        if not voice_file:
+            voice_file = ""  # Empty string if voice generation fails
         
         # Generate illustration
         image_result = generate_image(story_text, request.theme)
