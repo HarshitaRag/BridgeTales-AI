@@ -142,14 +142,7 @@ class LocationService:
                 'IndexName': self.place_index_name,
                 'Text': search_text,
                 'BiasPosition': [longitude, latitude],  # Note: AWS uses [lng, lat] format
-                'MaxResults': max_results * 5,  # Get many more results to filter for local only
-                'FilterCategories': [
-                    'Cafe',
-                    'CoffeeShop',
-                    'Park',
-                    'Recreation',
-                    'Garden'
-                ]
+                'MaxResults': max_results * 5  # Get many more results to filter for local only
             }
             
             # Perform the search
