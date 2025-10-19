@@ -124,16 +124,22 @@ function displayStory(data, append = false) {
     const audioPlayer = document.getElementById('audioPlayer');
     const audioElement = document.getElementById('audioElement');
 
+    // Debug logging
+    console.log('Displaying story:', data);
+    console.log('Story text length:', data.story ? data.story.length : 0);
+
     // Set content
-    storyTheme.textContent = data.theme;
+    storyTheme.textContent = data.theme || 'Your Story';
     
     if (append) {
         // Append new segment to existing story
-        storyText.textContent += '\n\n' + data.story;
+        storyText.textContent += '\n\n' + (data.story || '');
     } else {
         // New story
-        storyText.textContent = data.story;
+        storyText.textContent = data.story || 'Story loading...';
     }
+    
+    console.log('Story element updated with', storyText.textContent.length, 'characters');
 
     // Display illustration in left page
     displayIllustration(data.image_description);
@@ -161,11 +167,13 @@ function displayStory(data, append = false) {
     }, 100);
 }
 
-// Display illustration in left page
+// Display illustration in right page
 function displayIllustration(imageDescription) {
     const illustrationContainer = document.getElementById('illustrationContainer');
     
-    if (imageDescription && imageDescription.trim()) {
+    console.log('Image description:', imageDescription);
+    
+    if (imageDescription && imageDescription.trim() && imageDescription !== "Image generation unavailable") {
         illustrationContainer.innerHTML = `
             <div class="illustration-description">
                 <p>${imageDescription}</p>
@@ -175,7 +183,7 @@ function displayIllustration(imageDescription) {
         illustrationContainer.innerHTML = `
             <div class="illustration-placeholder">
                 <span class="placeholder-icon">🎨</span>
-                <p class="placeholder-text">Illustration</p>
+                <p class="placeholder-text">Generating illustration...</p>
             </div>
         `;
     }
