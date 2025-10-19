@@ -75,7 +75,7 @@ async function generateStory() {
 }
 
 // Continue story with chosen option
-async function continueStory(choiceText) {
+async function continueStory(choiceText, isEnding = false) {
     // Show loading state
     showLoading();
     hideStory();
@@ -93,7 +93,8 @@ async function continueStory(choiceText) {
             body: JSON.stringify({
                 theme: currentStoryData.theme,
                 choice: choiceText,
-                story_context: storyContext
+                story_context: storyContext,
+                is_ending: isEnding
             })
         });
         
@@ -306,9 +307,16 @@ function displayChoices(choices) {
             const button = document.createElement('button');
             button.className = 'choice-button';
             button.textContent = choice;
-            button.onclick = () => continueStory(choice);
+            button.onclick = () => continueStory(choice, false);
             choicesContainer.appendChild(button);
         });
+        
+        // Add "End Story" button
+        const endButton = document.createElement('button');
+        endButton.className = 'choice-button end-story-btn';
+        endButton.textContent = '🌟 End Story with Happy Ending';
+        endButton.onclick = () => continueStory('Create a happy ending', true);
+        choicesContainer.appendChild(endButton);
     } else {
         // Remove choices container if no choices
         const choicesContainer = document.getElementById('choicesContainer');

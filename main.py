@@ -50,6 +50,7 @@ class ContinueRequest(BaseModel):
     theme: str
     choice: str
     story_context: str
+    is_ending: bool = False  # Flag to generate a happy ending
 
 class HealthResponse(BaseModel):
     status: str
@@ -180,17 +181,29 @@ async def continue_story(request: ContinueRequest):
                 detail="Choice must be provided"
             )
         
-        # Continue story based on choice
-        result = await story_generator.generate_story(
-            prompt=request.story_context,
-            max_length=1000,
-            temperature=0.7,
-            is_continuation=True,
-            previous_choice=request.choice
-        )
-        
-        story_text = result["story"]
-        choices = result.get("choices", [])
+        # Check if this is a happy ending request
+        if request.is_ending:
+            # Generate a happy ending
+            ending_prompt = f"{request.story_context}\n\nNow create a satisfying happy ending that wraps up the story beautifully. Make it heartwarming and conclusive with no more choices."
+            result = await story_generator.generate_story(
+                prompt=ending_prompt,
+                max_length=1000,
+                temperature=0.7,
+                is_continuation=False
+            )
+            story_text = result["story"]
+            choices = []  # No more choices after ending
+        else:
+            # Continue story based on choice
+            result = await story_generator.generate_story(
+                prompt=request.story_context,
+                max_length=1000,
+                temperature=0.7,
+                is_continuation=True,
+                previous_choice=request.choice
+            )
+            story_text = result["story"]
+            choices = result.get("choices", [])
         
         # Generate voice narration with AWS Polly (child voice)
         voice_file = ""

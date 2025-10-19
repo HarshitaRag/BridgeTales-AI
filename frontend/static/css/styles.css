@@ -555,6 +555,18 @@ body {
     margin-bottom: 0;
 }
 
+.end-story-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    border-color: #f59e0b !important;
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+.end-story-btn:hover {
+    background: linear-gradient(135deg, #d97706, #b45309) !important;
+    border-color: #d97706 !important;
+}
+
 /* Story Actions */
 .story-actions {
     display: flex;
