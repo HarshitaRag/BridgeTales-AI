@@ -103,6 +103,26 @@
             <p class="subtitle">All your completed adventures</p>
         </div>
         
+        <!-- Story Statistics -->
+        <div class="stats-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="totalStories">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Stories Created</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="totalPages">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Pages Written</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="businessesSupported">0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Businesses Supported</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700;" id="totalDonated">$0</div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">Community Support</div>
+            </div>
+        </div>
+        
         <div id="booksGrid" class="books-grid"></div>
         
         <div id="emptyState" class="empty-state" style="display: none;">
@@ -116,8 +136,21 @@
         // Load and display finished books
         function loadFinishedBooks() {
             const finishedBooks = JSON.parse(localStorage.getItem('finishedBooks') || '[]');
+            const paymentsHistory = JSON.parse(localStorage.getItem('paymentsHistory') || '[]');
             const booksGrid = document.getElementById('booksGrid');
             const emptyState = document.getElementById('emptyState');
+            
+            // Calculate statistics
+            const totalStories = finishedBooks.length;
+            const totalPages = finishedBooks.reduce((sum, book) => sum + book.pages.length, 0);
+            const businessesSupported = paymentsHistory.length;
+            const totalDonated = paymentsHistory.reduce((sum, payment) => sum + (payment.total || 0), 0);
+            
+            // Update stat cards
+            document.getElementById('totalStories').textContent = totalStories;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('businessesSupported').textContent = businessesSupported;
+            document.getElementById('totalDonated').textContent = `$${totalDonated.toFixed(2)}`;
             
             if (finishedBooks.length === 0) {
                 emptyState.style.display = 'block';

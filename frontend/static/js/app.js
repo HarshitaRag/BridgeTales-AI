@@ -646,6 +646,15 @@ function processPayment(event) {
     
     const total = selectedShops.reduce((sum, shop) => sum + shop.amount, 0);
     
+    // Save payment to history for dashboard stats
+    const paymentsHistory = JSON.parse(localStorage.getItem('paymentsHistory') || '[]');
+    paymentsHistory.push({
+        businesses: selectedShops,
+        total: total,
+        date: new Date().toISOString()
+    });
+    localStorage.setItem('paymentsHistory', JSON.stringify(paymentsHistory));
+    
     // Close modal first
     closeVisaModal();
     
