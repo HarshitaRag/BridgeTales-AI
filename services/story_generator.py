@@ -90,18 +90,21 @@ class StoryGenerator:
             system_prompt = """You are a creative interactive storyteller creating choose-your-own-adventure stories.
             Write an engaging opening for an interactive adventure (3-4 paragraphs).
             Set the scene, introduce the main character, and create an exciting moment.
+            IMPORTANT: Always include a specific named location (like "Sunny Side Cafe", "The Magic Bookshop", "Riverside Park") where the story takes place.
             End with 2-3 meaningful choices for the reader.
             Format your response as:
             
             STORY:
-            [Your story opening here - make it complete and engaging]
+            [Your story opening here - make it complete and engaging with a specific location name]
+            
+            LOCATION: [Name of the specific place/business in the story]
             
             CHOICES:
             1. [First choice]
             2. [Second choice]
             3. [Third choice - optional]"""
             
-            user_prompt = f"Start an interactive adventure story about: {prompt}"
+            user_prompt = f"Start an interactive adventure story about: {prompt}. Include a specific named location or business."
             
             if genre:
                 user_prompt += f"\nGenre: {genre}"
@@ -136,15 +139,31 @@ class StoryGenerator:
         return messages
     
     def _parse_story_and_choices(self, text: str) -> Dict[str, Any]:
-        """Parse the story text and extract choices"""
-        # Split by STORY: and CHOICES:
+        """Parse the story text and extract choices and location"""
+        # Split by markers
         story_part = ""
+        location_part = ""
         choices_part = ""
         
-        if "STORY:" in text and "CHOICES:" in text:
-            parts = text.split("CHOICES:")
-            story_part = parts[0].replace("STORY:", "").strip()
-            choices_part = parts[1].strip()
+        if "STORY:" in text:
+            # Extract story
+            if "LOCATION:" in text:
+                parts = text.split("LOCATION:")
+                story_part = parts[0].replace("STORY:", "").strip()
+                remainder = parts[1]
+                
+                if "CHOICES:" in remainder:
+                    location_choices = remainder.split("CHOICES:")
+                    location_part = location_choices[0].strip()
+                    choices_part = location_choices[1].strip()
+                else:
+                    location_part = remainder.strip()
+            elif "CHOICES:" in text:
+                parts = text.split("CHOICES:")
+                story_part = parts[0].replace("STORY:", "").strip()
+                choices_part = parts[1].strip()
+            else:
+                story_part = text.replace("STORY:", "").strip()
         else:
             # Fallback: assume everything is story if format not followed
             story_part = text.strip()
@@ -168,6 +187,7 @@ class StoryGenerator:
         
         return {
             "story": story_part,
+            "location": location_part,
             "choices": choices
         }
     
@@ -213,6 +233,7 @@ class StoryGenerator:
             
             return {
                 "story": parsed["story"],
+                "location": parsed.get("location", ""),
                 "choices": parsed["choices"],
                 "model_used": f"Bedrock-{model_id}"
             }

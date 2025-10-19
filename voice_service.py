@@ -2,7 +2,7 @@
 import os
 import boto3
 
-def generate_voice_with_polly(text: str, voice_id: str = "Ivy") -> str:
+def generate_voice_with_polly(text: str, voice_id: str = "Ivy", output_file: str = "story_audio.mp3") -> str:
     """Synthesize 'text' to MP3 via Amazon Polly and return the local file path.
     
     Child-friendly voices:
@@ -25,11 +25,11 @@ def generate_voice_with_polly(text: str, voice_id: str = "Ivy") -> str:
         resp = polly.synthesize_speech(
             Text=safe_text,
             OutputFormat="mp3",
-            VoiceId=voice_id,  # Using Ivy (child voice) by default
-            Engine="neural"  # Neural engine for more natural child voice
+            VoiceId=voice_id,
+            Engine="neural"  # Neural engine for more natural voice
         )
 
-        out_path = "story_audio.mp3"
+        out_path = output_file
         with open(out_path, "wb") as f:
             audio_stream = resp.get("AudioStream")
             if audio_stream:

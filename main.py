@@ -44,13 +44,20 @@ class StoryResponse(BaseModel):
     story: str
     voice_file: Optional[str] = ""
     images: List[str] = []
+    location: str = ""
     choices: List[str] = []
     
+class ProfileData(BaseModel):
+    name: str
+    age: int
+    voice: str
+
 class ContinueRequest(BaseModel):
     theme: str
     choice: str
     story_context: str
     is_ending: bool = False  # Flag to generate a happy ending
+    voice: str = "Ivy"  # User's voice preference
 
 class HealthResponse(BaseModel):
     status: str
@@ -61,6 +68,12 @@ class HealthResponse(BaseModel):
 async def root():
     """Serve the frontend"""
     with open("frontend/index.html", "r") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/dashboard.html", response_class=HTMLResponse)
+async def dashboard():
+    """Serve the dashboard page"""
+    with open("frontend/dashboard.html", "r") as f:
         return HTMLResponse(content=f.read())
 
 @app.get("/api", response_model=dict)
@@ -94,6 +107,42 @@ async def get_illustration(page_num: int):
     else:
         raise HTTPException(status_code=404, detail="Image file not found")
 
+@app.post("/api/profile")
+async def save_profile(profile: ProfileData):
+    """Save user profile data"""
+    # Save to Pinecone
+    try:
+        from pinecone_service import save_profile_to_pinecone
+        await save_profile_to_pinecone(profile.dict())
+    except Exception as e:
+        print(f"Error saving to Pinecone: {e}")
+    
+    return {"status": "success", "message": "Profile saved", "profile": profile}
+
+@app.get("/api/voice-demo")
+async def voice_demo(voice: str, text: str):
+    """Generate voice demo"""
+    try:
+        # Generate temp audio file
+        audio_file = generate_voice_with_polly(text, voice_id=voice, output_file="demo_audio.mp3")
+        if audio_file and os.path.exists(audio_file):
+            return FileResponse(audio_file, media_type="audio/mpeg")
+        else:
+            raise HTTPException(status_code=500, detail="Voice demo generation failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/save-book")
+async def save_book(book: dict):
+    """Save completed book"""
+    try:
+        from pinecone_service import save_book_to_pinecone
+        await save_book_to_pinecone(book)
+        return {"status": "success", "message": "Book saved"}
+    except Exception as e:
+        print(f"Error saving book: {e}")
+        return {"status": "error", "message": str(e)}
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
@@ -109,7 +158,7 @@ async def health_check():
     )
 
 @app.get("/story/generate", response_model=StoryResponse)
-async def generate_story(theme: str = "kindness"):
+async def generate_story(theme: str = "kindness", voice: str = "Ivy"):
     """Generate a story based on the provided theme"""
     global page_counter
     page_counter += 1  # Increment for each new story segment
@@ -134,12 +183,13 @@ async def generate_story(theme: str = "kindness"):
         )
         
         story_text = result["story"]
+        location = result.get("location", "")
         choices = result.get("choices", [])
         
         # Generate voice narration with AWS Polly (child voice)
         voice_file = ""
         try:
-            result_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
+            result_file = generate_voice_with_polly(story_text, voice_id=voice)
             if result_file:
                 voice_file = result_file
         except Exception as e:
@@ -158,6 +208,7 @@ async def generate_story(theme: str = "kindness"):
             story=story_text,
             voice_file=voice_file,
             images=images,
+            location=location,
             choices=choices
         )
         
@@ -205,10 +256,10 @@ async def continue_story(request: ContinueRequest):
             story_text = result["story"]
             choices = result.get("choices", [])
         
-        # Generate voice narration with AWS Polly (child voice)
+        # Generate voice narration with AWS Polly
         voice_file = ""
         try:
-            result_file = generate_voice_with_polly(story_text, voice_id="Ivy")  # Child voice
+            result_file = generate_voice_with_polly(story_text, voice_id=request.voice)
             if result_file:
                 voice_file = result_file
         except Exception as e:

@@ -10,10 +10,80 @@
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Profile Setup Modal -->
+    <div id="profileModal" class="profile-modal">
+        <div class="profile-modal-content">
+            <button class="profile-close-btn" id="profileCloseBtn">×</button>
+            <h2 class="profile-title" id="profileModalTitle">Welcome to BridgeTales!</h2>
+            <p class="profile-subtitle" id="profileModalSubtitle">Let's create your storytelling profile</p>
+            
+            <form id="profileForm" class="profile-form">
+                <div class="profile-form-group">
+                    <label for="userName">Your Name</label>
+                    <input type="text" id="userName" placeholder="Enter your name" required>
+                </div>
+                
+                <div class="profile-form-group">
+                    <label for="userAge">Your Age</label>
+                    <input type="number" id="userAge" placeholder="Enter your age" min="1" max="120" required>
+                </div>
+                
+                <div class="profile-form-group">
+                    <label>Choose Your Story Voice</label>
+                    <div class="voice-options">
+                        <label class="voice-option">
+                            <input type="radio" name="voicePreference" value="Ivy" checked>
+                            <span class="voice-label">
+                                <span class="voice-name">Ivy</span>
+                                <span class="voice-desc">Child's voice - cheerful and playful</span>
+                            </span>
+                            <button type="button" class="voice-demo-btn" onclick="playVoiceDemo('Ivy')">🔊 Demo</button>
+                        </label>
+                        <label class="voice-option">
+                            <input type="radio" name="voicePreference" value="Joanna">
+                            <span class="voice-label">
+                                <span class="voice-name">Joanna</span>
+                                <span class="voice-desc">Warm and friendly female voice</span>
+                            </span>
+                            <button type="button" class="voice-demo-btn" onclick="playVoiceDemo('Joanna')">🔊 Demo</button>
+                        </label>
+                        <label class="voice-option">
+                            <input type="radio" name="voicePreference" value="Matthew">
+                            <span class="voice-label">
+                                <span class="voice-name">Matthew</span>
+                                <span class="voice-desc">Calm and storytelling male voice</span>
+                            </span>
+                            <button type="button" class="voice-demo-btn" onclick="playVoiceDemo('Matthew')">🔊 Demo</button>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="profile-submit-btn">Start Your Adventure</button>
+            </form>
+        </div>
+    </div>
+
     <div class="container">
         <header class="header">
             <h1 class="title">BridgeTales</h1>
             <p class="subtitle">Interactive AI Adventure Stories You Control</p>
+            <div class="header-buttons" id="headerButtons">
+                <!-- Logged out buttons -->
+                <div id="loggedOutButtons" style="display: none;">
+                    <button class="auth-btn login-btn" id="loginBtn">Login</button>
+                    <button class="auth-btn signup-btn" id="signupBtn">Sign Up</button>
+                </div>
+                <!-- Logged in buttons -->
+                <div id="loggedInButtons" style="display: none;">
+                    <button class="dashboard-btn" onclick="window.location.href='/dashboard.html'" title="My Stories">
+                        📚 Dashboard
+                    </button>
+                    <button class="profile-btn" onclick="openProfileModal()" title="Edit Profile">
+                        <span id="profileNameDisplay"></span> ⚙️
+                    </button>
+                    <button class="auth-btn logout-btn" id="logoutBtn">Logout</button>
+                </div>
+            </div>
         </header>
 
         <div class="quick-actions">
@@ -45,13 +115,7 @@
         </div>
 
         <div id="loadingState" class="loading-state" style="display: none;">
-            <div class="book-loader">
-                <div class="book">
-                    <div class="page"></div>
-                    <div class="page"></div>
-                    <div class="page"></div>
-                </div>
-            </div>
+            <div class="spinner"></div>
             <p class="loading-text">Crafting your story...</p>
         </div>
 
@@ -85,7 +149,13 @@
                         <div class="illustration-header">
                             <span class="illustration-label">Story Illustration</span>
                         </div>
-                        <div id="illustrationContent"></div>
+                        <div class="illustration-container-wrapper">
+                            <div id="illustrationContent"></div>
+                            <button class="visa-pay-overlay-btn" id="visaPayBtn" title="Support this location with Visa">
+                                <span class="visa-text-small">VISA</span>
+                                <span>Pay Here</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -128,6 +198,72 @@
         </div>
 
         <div id="errorMessage" class="error-message" style="display: none;"></div>
+    </div>
+
+    <!-- Visa Payment Modal -->
+    <div id="visaPaymentModal" class="visa-modal" style="display: none;">
+        <div class="visa-modal-content">
+            <button class="visa-close-btn" id="visaCloseBtn">×</button>
+            
+            <div class="visa-header">
+                <div class="visa-logo">
+                    <span class="visa-text">VISA</span>
+                </div>
+                <h2 class="visa-title">Support Local Businesses</h2>
+                <p class="visa-subtitle">From your story adventure</p>
+            </div>
+
+            <form class="visa-payment-form" id="visaPaymentForm">
+                <!-- Shop Selection -->
+                <div class="form-group">
+                    <label>Select Location(s) to Support</label>
+                    <div id="shopsList" class="shops-list"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cardNumber">Card Number</label>
+                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group form-group-expiry">
+                        <label for="expiryDate">Expiry Date</label>
+                        <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5" required>
+                    </div>
+                    <div class="form-group form-group-cvv">
+                        <label for="cvv">CVV</label>
+                        <input type="text" id="cvv" placeholder="123" maxlength="4" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cardName">Cardholder Name</label>
+                    <input type="text" id="cardName" placeholder="JOHN DOE" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Total Amount (USD)</label>
+                    <div class="total-amount" id="totalAmount">$0.00</div>
+                </div>
+
+                <button type="submit" class="visa-pay-btn">
+                    <span>Pay with Visa</span>
+                </button>
+            </form>
+
+            <div class="visa-security">
+                <p>🔒 Secured by Visa • This is a demo payment interface</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Container -->
+    <canvas id="confettiCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100000; display: none;"></canvas>
+    
+    <!-- Thank You Message -->
+    <div id="thankYouMessage" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 40px 60px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 100001; text-align: center;">
+        <h2 style="color: #1434CB; font-size: 2.5rem; margin-bottom: 10px;">Thank You! 🎉</h2>
+        <p style="color: #666; font-size: 1.2rem;">Your payment was successful!</p>
     </div>
 
     <footer class="footer">
