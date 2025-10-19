@@ -62,25 +62,53 @@
                     <div class="theme-decoration"></div>
                 </div>
                 
-                <div class="story-content">
-                    <p class="story-text" id="storyText"></p>
-                </div>
-
-                <div class="audio-player" id="audioPlayer" style="display: none;">
-                    <div class="audio-controls">
-                        <button class="play-btn" id="playBtn" onclick="toggleAudio()">
-                            <span id="playIcon">▶</span>
-                        </button>
-                        <div class="audio-info">
-                            <span class="audio-label">Listen to your story</span>
-                            <div class="audio-progress">
-                                <div class="progress-bar" id="progressBar"></div>
+                <!-- Storybook Pages Layout -->
+                <div class="storybook-pages">
+                    <!-- Left Page: Illustration -->
+                    <div class="page page-left">
+                        <div class="illustration-container" id="illustrationContainer">
+                            <div class="illustration-placeholder">
+                                <span class="placeholder-icon">🎨</span>
+                                <p class="placeholder-text">Illustration</p>
                             </div>
                         </div>
                     </div>
-                    <audio id="audioElement" onended="resetAudioButton()"></audio>
+                    
+                    <!-- Right Page: Story Text -->
+                    <div class="page page-right">
+                        <div class="story-text-container">
+                            <p class="story-text" id="storyText"></p>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Enhanced Audio Player -->
+                <div class="audio-player-enhanced" id="audioPlayer" style="display: none;">
+                    <div class="audio-controls-enhanced">
+                        <button class="audio-btn rewind-btn" onclick="rewindAudio()" title="Rewind 10s">
+                            <span>⏪</span>
+                        </button>
+                        <button class="audio-btn play-pause-btn" id="playPauseBtn" onclick="toggleAudio()">
+                            <span id="playIcon">▶</span>
+                        </button>
+                        <button class="audio-btn forward-btn" onclick="forwardAudio()" title="Forward 10s">
+                            <span>⏩</span>
+                        </button>
+                        <div class="audio-info-enhanced">
+                            <div class="audio-time">
+                                <span id="currentTime">0:00</span>
+                                <span class="time-separator">/</span>
+                                <span id="duration">0:00</span>
+                            </div>
+                            <div class="audio-progress-enhanced" onclick="seekAudio(event)">
+                                <div class="progress-bar-enhanced" id="progressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <audio id="audioElement" onended="resetAudioButton()" ontimeupdate="updateAudioProgress()"></audio>
+                </div>
+
+                <!-- Story Actions -->
                 <div class="story-actions">
                     <button class="action-button" onclick="shareStory()">
                         <span>Share</span>

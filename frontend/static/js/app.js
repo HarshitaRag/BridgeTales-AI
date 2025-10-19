@@ -135,7 +135,7 @@ function displayStory(data, append = false) {
         storyText.textContent = data.story;
     }
 
-    // Display illustration description if available
+    // Display illustration in left page
     displayIllustration(data.image_description);
 
     // Set up audio if available
@@ -143,8 +143,8 @@ function displayStory(data, append = false) {
         audioElement.src = `${API_BASE_URL}/${data.voice_file}`;
         audioPlayer.style.display = 'block';
         
-        // Update progress bar as audio plays
-        audioElement.addEventListener('timeupdate', updateProgress);
+        // Setup audio listeners
+        audioElement.addEventListener('loadedmetadata', updateDuration);
     } else {
         audioPlayer.style.display = 'none';
     }
@@ -161,31 +161,23 @@ function displayStory(data, append = false) {
     }, 100);
 }
 
-// Display illustration description
+// Display illustration in left page
 function displayIllustration(imageDescription) {
-    let illustrationBox = document.getElementById('illustrationBox');
-    
-    if (!illustrationBox) {
-        illustrationBox = document.createElement('div');
-        illustrationBox.id = 'illustrationBox';
-        illustrationBox.className = 'illustration-box';
-        
-        // Insert after story text, before audio player
-        const storyContent = document.querySelector('.story-content');
-        storyContent.parentNode.insertBefore(illustrationBox, storyContent.nextSibling);
-    }
+    const illustrationContainer = document.getElementById('illustrationContainer');
     
     if (imageDescription && imageDescription.trim()) {
-        illustrationBox.innerHTML = `
-            <div class="illustration-header">
-                <span class="illustration-icon">🎨</span>
-                <h3 class="illustration-title">Illustrated Scene</h3>
+        illustrationContainer.innerHTML = `
+            <div class="illustration-description">
+                <p>${imageDescription}</p>
             </div>
-            <p class="illustration-description">${imageDescription}</p>
         `;
-        illustrationBox.style.display = 'block';
     } else {
-        illustrationBox.style.display = 'none';
+        illustrationContainer.innerHTML = `
+            <div class="illustration-placeholder">
+                <span class="placeholder-icon">🎨</span>
+                <p class="placeholder-text">Illustration</p>
+            </div>
+        `;
     }
 }
 
@@ -240,15 +232,57 @@ function toggleAudio() {
     }
 }
 
-// Update audio progress bar
-function updateProgress() {
+// Rewind audio by 10 seconds
+function rewindAudio() {
+    const audioElement = document.getElementById('audioElement');
+    audioElement.currentTime = Math.max(0, audioElement.currentTime - 10);
+}
+
+// Forward audio by 10 seconds
+function forwardAudio() {
+    const audioElement = document.getElementById('audioElement');
+    audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + 10);
+}
+
+// Seek to specific position in audio
+function seekAudio(event) {
+    const audioElement = document.getElementById('audioElement');
+    const progressBar = event.currentTarget;
+    const clickX = event.offsetX;
+    const width = progressBar.offsetWidth;
+    const seekTime = (clickX / width) * audioElement.duration;
+    
+    audioElement.currentTime = seekTime;
+}
+
+// Update audio progress bar and time display
+function updateAudioProgress() {
     const audioElement = document.getElementById('audioElement');
     const progressBar = document.getElementById('progressBar');
+    const currentTimeEl = document.getElementById('currentTime');
     
     if (audioElement.duration) {
         const progress = (audioElement.currentTime / audioElement.duration) * 100;
         progressBar.style.width = `${progress}%`;
+        currentTimeEl.textContent = formatTime(audioElement.currentTime);
     }
+}
+
+// Update duration display
+function updateDuration() {
+    const audioElement = document.getElementById('audioElement');
+    const durationEl = document.getElementById('duration');
+    
+    if (audioElement.duration) {
+        durationEl.textContent = formatTime(audioElement.duration);
+    }
+}
+
+// Format time in MM:SS
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Reset audio button when audio ends

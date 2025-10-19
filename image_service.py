@@ -13,53 +13,61 @@ def generate_image(story_text: str, theme: str, output_file: str = "story_image.
     """Generate an illustration for the story using Gemini"""
     try:
         # Configure Gemini
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            logger.error("❌ GEMINI_API_KEY not found")
+            return {
+                "image_file": None,
+                "description": "Gemini API key not configured",
+                "status": "failed"
+            }
+            
+        genai.configure(api_key=api_key)
         
-        # Use Gemini Pro model for text generation
-        model = genai.GenerativeModel('gemini-pro')
+        # Use the correct Gemini model - gemini-1.5-pro or gemini-1.0-pro
+        try:
+            model = genai.GenerativeModel('gemini-1.5-pro-latest')
+        except:
+            # Fallback to older model
+            model = genai.GenerativeModel('gemini-1.0-pro-latest')
         
-        # Create a concise prompt for image generation
-        # Extract key visual elements from the story
-        image_prompt = f"""Create a beautiful, storybook-style illustration for this scene:
+        logger.info(f"🎨 Generating illustration description with Gemini...")
         
-Theme: {theme}
-Scene: {story_text[:500]}
+        # Generate a vivid visual description
+        prompt = f"""You are a children's book illustrator. Based on this story segment about {theme}, 
+create a detailed visual description for an illustration in 2-3 sentences:
 
-Style: Colorful, child-friendly, whimsical storybook illustration with warm colors and soft edges. 
-Make it suitable for children aged 5-12. Focus on the main character and key scene elements."""
+Story: {story_text[:400]}
 
-        logger.info(f"🎨 Generating illustration with Gemini...")
+Describe: the setting, main character(s), their appearance, actions, mood, colors, and atmosphere.
+Make it vivid, specific, and suitable for a whimsical children's storybook illustration."""
         
-        # Generate image description first (Gemini doesn't directly generate images yet)
-        # We'll create a placeholder or use a text-to-image API
-        # For now, let's create a descriptive text that can be used with other services
+        response = model.generate_content(prompt)
         
-        response = model.generate_content(f"""Based on this story segment, create a detailed visual description 
-        for an illustration in 2-3 sentences that an artist could use:
-        
-        {story_text[:300]}
-        
-        Focus on: setting, character appearance, mood, and key visual elements.
-        Make it vivid and specific for a children's storybook illustration.""")
-        
-        image_description = response.text
-        logger.info(f"📝 Image description generated: {image_description[:100]}...")
-        
-        # For now, return the description
-        # In production, you would use this with an actual image generation API
-        # like DALL-E, Midjourney, or Stable Diffusion
-        
-        return {
-            "image_file": output_file,
-            "description": image_description,
-            "status": "description_generated"
-        }
+        if response and response.text:
+            image_description = response.text.strip()
+            logger.info(f"✅ Image description generated successfully")
+            logger.info(f"📝 Description: {image_description[:100]}...")
+            
+            return {
+                "image_file": None,  # Not generating actual images yet
+                "description": image_description,
+                "status": "description_generated"
+            }
+        else:
+            logger.warning("⚠️ Empty response from Gemini")
+            return {
+                "image_file": None,
+                "description": f"A beautiful storybook scene about {theme}",
+                "status": "fallback"
+            }
         
     except Exception as e:
         logger.error(f"❌ Image generation failed: {e}")
+        # Return a fallback description
         return {
             "image_file": None,
-            "description": "Image generation unavailable",
+            "description": f"A colorful, whimsical illustration depicting a scene about {theme} with warm, inviting colors and child-friendly characters.",
             "status": "failed",
             "error": str(e)
         }
