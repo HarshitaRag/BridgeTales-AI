@@ -1,42 +1,45 @@
-# image_service.py
+from dotenv import load_dotenv
+import os
 import boto3
 import json
 import base64
-import os
+
+# 👇 Add this line at the top of image_service.py
+load_dotenv()
 
 def generate_images(prompt: str):
-    """Generate a storybook illustration using AWS Bedrock's Stable Diffusion XL"""
     try:
+        print("🎨 Generating image with Bedrock Stable Diffusion...")
         client = boto3.client(
             "bedrock-runtime",
-            region_name=os.getenv("AWS_REGION", "us-east-1"),
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_REGION", "us-east-1")
         )
 
         body = json.dumps({
             "text_prompts": [{"text": prompt}],
-            "cfg_scale": 7,     # how closely it follows the prompt
-            "steps": 30         # rendering quality (more = smoother)
+            "cfg_scale": 8,
+            "steps": 40
         })
 
+        # Try different Stable Diffusion models based on availability
+        # Common model IDs: stability.stable-diffusion-xl-v1, amazon.titan-image-generator-v1
         response = client.invoke_model(
-            modelId="stability.stable-diffusion-xl-v1",
+            modelId="stability.stable-diffusion-xl-v1:0",
             body=body
         )
 
         result = json.loads(response["body"].read())
         image_base64 = result["artifacts"][0]["base64"]
 
-        # Save locally
-        output_file = "illustration.png"
-        with open(output_file, "wb") as f:
+        output_path = "illustration.png"
+        with open(output_path, "wb") as f:
             f.write(base64.b64decode(image_base64))
 
-        print(f"✅ Image saved as {output_file}")
-        return [output_file]
+        print(f"✅ Image saved: {output_path}")
+        return [output_path]
 
     except Exception as e:
-        print(f"❌ AWS Image Generation failed: {e}")
-        # Fallback placeholder
+        import traceback
+        print("❌ Bedrock Image Generation failed:")
+        traceback.print_exc()
         return ["https://placehold.co/600x400?text=Illustration+Unavailable"]
