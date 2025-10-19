@@ -712,3 +712,130 @@ body {
         flex-direction: row;
     }
 }
+
+/* Location Features */
+.location-btn {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.location-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    transform: translateY(-2px);
+}
+
+.local-businesses {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    border: 2px solid #e5e7eb;
+}
+
+.businesses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.businesses-header h3 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.close-businesses {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.close-businesses:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.businesses-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.business-card {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.business-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.business-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.business-address {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.business-phone,
+.business-website,
+.business-categories,
+.business-distance {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.business-phone {
+    color: #059669;
+}
+
+.business-website a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.business-website a:hover {
+    text-decoration: underline;
+}
+
+.business-categories {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.business-distance {
+    color: #6366f1;
+    font-weight: 500;
+}
+
+.no-businesses {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
+}

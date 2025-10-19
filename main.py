@@ -12,6 +12,7 @@ from voice_service import generate_voice_with_polly
 from image_service import generate_images
 # Import our story generation service and config
 from services.story_generator import StoryGenerator
+from services.location_service import LocationService
 from config import Config
 
 app = FastAPI(
@@ -29,8 +30,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize story generator
+# Initialize services
 story_generator = StoryGenerator()
+location_service = LocationService()
 
 # Track page counter for unique images
 page_counter = 0
@@ -56,6 +58,28 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
     services: dict
+
+class LocationRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius: Optional[int] = 5000
+    max_results: Optional[int] = 10
+
+class StoryLocationRequest(BaseModel):
+    story_context: str
+    latitude: float
+    longitude: float
+    max_results: Optional[int] = 5
+
+class BusinessResponse(BaseModel):
+    name: str
+    address: str
+    phone: Optional[str] = ""
+    website: Optional[str] = ""
+    categories: List[str] = []
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    distance: Optional[float] = None
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -99,7 +123,8 @@ async def health_check():
     """Health check endpoint"""
     services = {
         "aws_bedrock": await story_generator.check_bedrock_connection(),
-        "openai": await story_generator.check_openai_connection()
+        "openai": await story_generator.check_openai_connection(),
+        "aws_location": await location_service.check_location_service_connection()
     }
     
     return HealthResponse(
@@ -234,6 +259,68 @@ async def continue_story(request: ContinueRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Story continuation failed: {str(e)}"
+        )
+
+@app.post("/location/nearby", response_model=List[BusinessResponse])
+async def get_nearby_businesses(request: LocationRequest):
+    """Get nearby businesses based on user location"""
+    try:
+        businesses = await location_service.search_nearby_businesses(
+            latitude=request.latitude,
+            longitude=request.longitude,
+            radius=request.radius,
+            max_results=request.max_results
+        )
+        
+        return [BusinessResponse(**business) for business in businesses]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to find nearby businesses: {str(e)}"
+        )
+
+@app.post("/location/story-related", response_model=List[BusinessResponse])
+async def get_story_related_businesses(request: StoryLocationRequest):
+    """Get businesses related to story context"""
+    try:
+        businesses = await location_service.find_story_related_businesses(
+            story_context=request.story_context,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            max_results=request.max_results
+        )
+        
+        return [BusinessResponse(**business) for business in businesses]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to find story-related businesses: {str(e)}"
+        )
+
+@app.get("/location/search")
+async def search_businesses_by_text(
+    query: str,
+    latitude: float,
+    longitude: float,
+    max_results: int = 10
+):
+    """Search for businesses by text query"""
+    try:
+        businesses = await location_service.search_businesses_by_text(
+            search_text=query,
+            latitude=latitude,
+            longitude=longitude,
+            max_results=max_results
+        )
+        
+        return [BusinessResponse(**business) for business in businesses]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to search businesses: {str(e)}"
         )
 
 if __name__ == "__main__":

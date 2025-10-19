@@ -6,6 +6,7 @@ let currentAudio = null;
 let currentStoryData = null;
 let storyPages = []; // Store all story pages with images
 let currentPageIndex = 0; // Current page being viewed
+let userLocation = null; // Store user's location
 
 // Set theme from quick action button
 function setTheme(theme) {
@@ -170,6 +171,9 @@ function displayCurrentPage() {
     // Show story container
     storyContainer.style.display = 'block';
     
+    // Show location button if we have location and story context
+    showLocationButton();
+    
     // Scroll to story
     setTimeout(() => {
         storyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -255,6 +259,9 @@ function displayStory(data, append = false) {
 
     // Show story container
     storyContainer.style.display = 'block';
+    
+    // Show location button
+    showLocationButton();
     
     // Scroll to story
     setTimeout(() => {
@@ -478,10 +485,150 @@ function hideError() {
     document.getElementById('errorMessage').style.display = 'none';
 }
 
+// Location-related functions
+async function getCurrentLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocation is not supported by this browser.'));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                console.log('Location obtained:', userLocation);
+                resolve(userLocation);
+            },
+            (error) => {
+                console.log('Location permission denied or error:', error.message);
+                reject(error);
+            },
+            {
+                enableHighAccuracy: false, // Faster, less accurate
+                timeout: 5000, // Shorter timeout
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    });
+}
+
+function showLocationButton() {
+    const locationBtn = document.getElementById('locationBtn');
+    if (currentStoryData) {
+        locationBtn.style.display = 'inline-block';
+        locationBtn.style.backgroundColor = '#10b981';
+        locationBtn.style.color = 'white';
+        console.log('Location button should be visible now');
+    } else {
+        locationBtn.style.display = 'none';
+        console.log('Location button hidden - currentStoryData:', !!currentStoryData);
+    }
+}
+
+async function findNearbyBusinesses() {
+    if (!userLocation) {
+        try {
+            await getCurrentLocation();
+        } catch (error) {
+            console.log('Location error:', error.message);
+            // Use a default location (Seattle, Washington) for testing
+            userLocation = {
+                latitude: 47.6062,
+                longitude: -122.3321
+            };
+            console.log('Using default location for testing:', userLocation);
+        }
+    }
+
+    if (!currentStoryData) {
+        showError('No story data available.');
+        return;
+    }
+
+    // Show loading state
+    const locationBtn = document.getElementById('locationBtn');
+    const originalText = locationBtn.innerHTML;
+    locationBtn.innerHTML = '<span>🔍 Finding places...</span>';
+    locationBtn.disabled = true;
+
+    try {
+        // Get story context from all pages
+        const storyContext = storyPages.map(p => p.story).join('\n\n');
+        
+        // Call the story-related businesses API
+        const response = await fetch(`${API_BASE_URL}/location/story-related`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                story_context: storyContext,
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                max_results: 5
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to find nearby businesses');
+        }
+
+        const businesses = await response.json();
+        displayBusinesses(businesses);
+
+    } catch (error) {
+        console.log('API Error:', error.message);
+        showError(`Error finding nearby businesses: ${error.message}`);
+    } finally {
+        // Reset button
+        locationBtn.innerHTML = originalText;
+        locationBtn.disabled = false;
+    }
+}
+
+// Demo businesses function removed - now using real AWS Location Service data
+
+function displayBusinesses(businesses) {
+    const businessesContainer = document.getElementById('localBusinesses');
+    const businessesList = document.getElementById('businessesList');
+    
+    if (businesses.length === 0) {
+        businessesList.innerHTML = '<p class="no-businesses">No related businesses found in your area.</p>';
+    } else {
+        businessesList.innerHTML = businesses.map(business => `
+            <div class="business-card">
+                <h4 class="business-name">${business.name}</h4>
+                <p class="business-address">${business.address}</p>
+                ${business.phone ? `<p class="business-phone">📞 ${business.phone}</p>` : ''}
+                ${business.website ? `<p class="business-website"><a href="${business.website}" target="_blank">🌐 Visit Website</a></p>` : ''}
+                ${business.categories.length > 0 ? `<p class="business-categories">🏷️ ${business.categories.join(', ')}</p>` : ''}
+                ${business.distance ? `<p class="business-distance">📍 ${Math.round(business.distance)}m away</p>` : ''}
+            </div>
+        `).join('');
+    }
+    
+    businessesContainer.style.display = 'block';
+    businessesContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeBusinesses() {
+    document.getElementById('localBusinesses').style.display = 'none';
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Focus on input
     document.getElementById('themeInput').focus();
+    
+    // Hide location button initially
+    const locationBtn = document.getElementById('locationBtn');
+    if (locationBtn) {
+        locationBtn.style.display = 'none';
+    }
     
     // Add some example themes on page load
     console.log('BridgeTales AI Storyteller loaded successfully!');

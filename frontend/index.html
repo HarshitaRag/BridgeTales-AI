@@ -123,6 +123,18 @@
                     <button class="action-button" onclick="newStory()">
                         <span>New Story</span>
                     </button>
+                    <button class="action-button location-btn" id="locationBtn" onclick="findNearbyBusinesses()" style="display: inline-block;">
+                        <span>📍 See something like this near me?</span>
+                    </button>
+                </div>
+
+                <!-- Local Businesses Section -->
+                <div id="localBusinesses" class="local-businesses" style="display: none;">
+                    <div class="businesses-header">
+                        <h3>📍 Local Places You Might Like</h3>
+                        <button class="close-businesses" onclick="closeBusinesses()">×</button>
+                    </div>
+                    <div id="businessesList" class="businesses-list"></div>
                 </div>
             </div>
         </div>
@@ -134,6 +146,6 @@
         <p>Powered by AI • Creating stories that inspire</p>
     </footer>
 
-    <script src="static/js/app.js"></script>
+    <script src="static/js/app.js?v=5"></script>
 </body>
 </html>
