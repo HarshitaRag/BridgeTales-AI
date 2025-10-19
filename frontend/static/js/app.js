@@ -167,25 +167,20 @@ function displayStory(data, append = false) {
     }, 100);
 }
 
-// Display illustration in right page
+// Display illustration
 function displayIllustration(imageDescription) {
-    const illustrationContainer = document.getElementById('illustrationContainer');
+    const illustrationBox = document.getElementById('illustrationBox');
+    const illustrationDescription = document.getElementById('illustrationDescription');
     
     console.log('Image description:', imageDescription);
     
-    if (imageDescription && imageDescription.trim() && imageDescription !== "Image generation unavailable") {
-        illustrationContainer.innerHTML = `
-            <div class="illustration-description">
-                <p>${imageDescription}</p>
-            </div>
-        `;
+    if (imageDescription && imageDescription.trim() && 
+        imageDescription !== "Image generation unavailable" &&
+        imageDescription !== "Gemini API key not configured") {
+        illustrationDescription.textContent = imageDescription;
+        illustrationBox.style.display = 'block';
     } else {
-        illustrationContainer.innerHTML = `
-            <div class="illustration-placeholder">
-                <span class="placeholder-icon">🎨</span>
-                <p class="placeholder-text">Generating illustration...</p>
-            </div>
-        `;
+        illustrationBox.style.display = 'none';
     }
 }
 
